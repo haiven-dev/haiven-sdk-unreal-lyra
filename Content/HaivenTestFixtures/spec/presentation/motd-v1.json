@@ -1,0 +1,503 @@
+{
+  "schema_version": 1,
+  "id": "haiven.presentation.motd/v1",
+  "capability": "motd-display",
+  "fixture_set": "motd-display-v1",
+  "projection": {
+    "closed": true,
+    "required_fields": [
+      "revision",
+      "status",
+      "visible",
+      "message",
+      "error",
+      "dismissedId"
+    ],
+    "status_values": [
+      "loading",
+      "absent",
+      "present",
+      "failure"
+    ],
+    "message": {
+      "required_fields": [
+        "id",
+        "title",
+        "body"
+      ],
+      "optional_fields": [
+        "url"
+      ]
+    }
+  },
+  "policy": {
+    "fallback_title": "Message of the day",
+    "text_format": "plain-text",
+    "failure_copy": "Unable to load message of the day.",
+    "action": {
+      "optional": true,
+      "allowed_scheme": "https",
+      "userinfo_allowed": false,
+      "navigation_owner": "host"
+    },
+    "boundary": {
+      "direction": "sdk-to-host-presentation",
+      "allow_fields": [
+        "revision",
+        "status",
+        "visible",
+        "message",
+        "error",
+        "dismissedId"
+      ],
+      "forbid_categories": [
+        "credentials",
+        "authorization",
+        "cookies",
+        "tokens",
+        "integration-configuration",
+        "transport-configuration"
+      ]
+    }
+  },
+  "transition_rules": {
+    "revision": "Increment once for each accepted state transition; duplicates, suppressed ids, and stale completions are no-ops.",
+    "duplicate": "A message id already presented at the current revision is not presented again.",
+    "dismissal": "Dismissal hides the current message and suppresses later delivery of the same id.",
+    "new_id": "A different message id is eligible for presentation after dismissal.",
+    "source_order": "Realtime state accepted after a REST load starts supersedes that older REST completion.",
+    "clear": "A clear transition removes the current message while retaining the last dismissed id."
+  },
+  "fixtures": [
+    {
+      "id": "loading",
+      "initial": {
+        "revision": 0,
+        "status": "absent",
+        "visible": false,
+        "message": null,
+        "error": null,
+        "dismissedId": null
+      },
+      "steps": [
+        {
+          "input": {
+            "type": "load_started",
+            "requestId": "request-1"
+          },
+          "expect": {
+            "revision": 1,
+            "status": "loading",
+            "visible": true,
+            "message": null,
+            "error": null,
+            "dismissedId": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "absent-204",
+      "initial_fixture": "loading",
+      "steps": [
+        {
+          "input": {
+            "type": "rest_absent",
+            "requestId": "request-1",
+            "httpStatus": 204
+          },
+          "expect": {
+            "revision": 2,
+            "status": "absent",
+            "visible": false,
+            "message": null,
+            "error": null,
+            "dismissedId": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "present",
+      "initial_fixture": "loading",
+      "steps": [
+        {
+          "input": {
+            "type": "rest_present",
+            "requestId": "request-1",
+            "message": {
+              "id": "motd-a",
+              "title": "Launch notes",
+              "body": "Season two starts today.",
+              "url": "https://example.test/news"
+            }
+          },
+          "expect": {
+            "revision": 2,
+            "status": "present",
+            "visible": true,
+            "message": {
+              "id": "motd-a",
+              "title": "Launch notes",
+              "body": "Season two starts today.",
+              "url": "https://example.test/news"
+            },
+            "error": null,
+            "dismissedId": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "fallback-title",
+      "initial": {
+        "revision": 0,
+        "status": "absent",
+        "visible": false,
+        "message": null,
+        "error": null,
+        "dismissedId": null
+      },
+      "steps": [
+        {
+          "input": {
+            "type": "realtime_present",
+            "message": {
+              "id": "motd-a",
+              "title": null,
+              "body": "Literal <b>plain text</b>."
+            }
+          },
+          "expect": {
+            "revision": 1,
+            "status": "present",
+            "visible": true,
+            "message": {
+              "id": "motd-a",
+              "title": "Message of the day",
+              "body": "Literal <b>plain text</b>."
+            },
+            "error": null,
+            "dismissedId": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "failure",
+      "initial_fixture": "loading",
+      "steps": [
+        {
+          "input": {
+            "type": "rest_failure",
+            "requestId": "request-1",
+            "privateDetail": "connection refused at internal-api:9443"
+          },
+          "expect": {
+            "revision": 2,
+            "status": "failure",
+            "visible": true,
+            "message": null,
+            "error": "Unable to load message of the day.",
+            "dismissedId": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "duplicate",
+      "initial": {
+        "revision": 4,
+        "status": "present",
+        "visible": true,
+        "message": {
+          "id": "motd-a",
+          "title": "Launch notes",
+          "body": "Season two starts today.",
+          "url": "https://example.test/news"
+        },
+        "error": null,
+        "dismissedId": null
+      },
+      "steps": [
+        {
+          "input": {
+            "type": "realtime_present",
+            "message": {
+              "id": "motd-a",
+              "title": "Changed duplicate",
+              "body": "This duplicate must not replace the presented message."
+            }
+          },
+          "expect": {
+            "revision": 4,
+            "status": "present",
+            "visible": true,
+            "message": {
+              "id": "motd-a",
+              "title": "Launch notes",
+              "body": "Season two starts today.",
+              "url": "https://example.test/news"
+            },
+            "error": null,
+            "dismissedId": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "dismiss-same-id",
+      "initial": {
+        "revision": 4,
+        "status": "present",
+        "visible": true,
+        "message": {
+          "id": "motd-a",
+          "title": "Launch notes",
+          "body": "Season two starts today."
+        },
+        "error": null,
+        "dismissedId": null
+      },
+      "steps": [
+        {
+          "input": {
+            "type": "dismiss"
+          },
+          "expect": {
+            "revision": 5,
+            "status": "absent",
+            "visible": false,
+            "message": null,
+            "error": null,
+            "dismissedId": "motd-a"
+          }
+        },
+        {
+          "input": {
+            "type": "realtime_present",
+            "message": {
+              "id": "motd-a",
+              "title": "Launch notes",
+              "body": "Season two starts today."
+            }
+          },
+          "expect": {
+            "revision": 5,
+            "status": "absent",
+            "visible": false,
+            "message": null,
+            "error": null,
+            "dismissedId": "motd-a"
+          }
+        },
+        {
+          "input": {
+            "type": "load_started",
+            "requestId": "r-dismissed"
+          },
+          "expect": {
+            "revision": 6,
+            "status": "loading",
+            "visible": true,
+            "message": null,
+            "error": null,
+            "dismissedId": "motd-a"
+          }
+        },
+        {
+          "input": {
+            "type": "rest_present",
+            "requestId": "r-dismissed",
+            "message": {
+              "id": "motd-a",
+              "title": "Launch notes",
+              "body": "Season two starts today."
+            }
+          },
+          "expect": {
+            "revision": 7,
+            "status": "absent",
+            "visible": false,
+            "message": null,
+            "error": null,
+            "dismissedId": "motd-a"
+          }
+        }
+      ]
+    },
+    {
+      "id": "new-id-reappears",
+      "initial": {
+        "revision": 5,
+        "status": "absent",
+        "visible": false,
+        "message": null,
+        "error": null,
+        "dismissedId": "motd-a"
+      },
+      "steps": [
+        {
+          "input": {
+            "type": "realtime_present",
+            "message": {
+              "id": "motd-b",
+              "title": "Maintenance complete",
+              "body": "Servers are available."
+            }
+          },
+          "expect": {
+            "revision": 6,
+            "status": "present",
+            "visible": true,
+            "message": {
+              "id": "motd-b",
+              "title": "Maintenance complete",
+              "body": "Servers are available."
+            },
+            "error": null,
+            "dismissedId": "motd-a"
+          }
+        }
+      ]
+    },
+    {
+      "id": "stale-rest-after-realtime",
+      "initial": {
+        "revision": 0,
+        "status": "absent",
+        "visible": false,
+        "message": null,
+        "error": null,
+        "dismissedId": null
+      },
+      "steps": [
+        {
+          "input": {
+            "type": "load_started",
+            "requestId": "request-1"
+          },
+          "expect": {
+            "revision": 1,
+            "status": "loading",
+            "visible": true,
+            "message": null,
+            "error": null,
+            "dismissedId": null
+          }
+        },
+        {
+          "input": {
+            "type": "realtime_present",
+            "message": {
+              "id": "motd-b",
+              "title": "Realtime update",
+              "body": "This message is newer."
+            }
+          },
+          "expect": {
+            "revision": 2,
+            "status": "present",
+            "visible": true,
+            "message": {
+              "id": "motd-b",
+              "title": "Realtime update",
+              "body": "This message is newer."
+            },
+            "error": null,
+            "dismissedId": null
+          }
+        },
+        {
+          "input": {
+            "type": "rest_present",
+            "requestId": "request-1",
+            "message": {
+              "id": "motd-a",
+              "title": "Stale REST result",
+              "body": "This message must be ignored."
+            }
+          },
+          "expect": {
+            "revision": 2,
+            "status": "present",
+            "visible": true,
+            "message": {
+              "id": "motd-b",
+              "title": "Realtime update",
+              "body": "This message is newer."
+            },
+            "error": null,
+            "dismissedId": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "clear",
+      "initial": {
+        "revision": 6,
+        "status": "present",
+        "visible": true,
+        "message": {
+          "id": "motd-b",
+          "title": "Maintenance complete",
+          "body": "Servers are available."
+        },
+        "error": null,
+        "dismissedId": "motd-a"
+      },
+      "steps": [
+        {
+          "input": {
+            "type": "realtime_clear"
+          },
+          "expect": {
+            "revision": 7,
+            "status": "absent",
+            "visible": false,
+            "message": null,
+            "error": null,
+            "dismissedId": "motd-a"
+          }
+        }
+      ]
+    },
+    {
+      "id": "unsafe-action-removed",
+      "initial": {
+        "revision": 0,
+        "status": "absent",
+        "visible": false,
+        "message": null,
+        "error": null,
+        "dismissedId": null
+      },
+      "steps": [
+        {
+          "input": {
+            "type": "realtime_present",
+            "message": {
+              "id": "motd-c",
+              "title": "Read more",
+              "body": "Unsafe actions are omitted.",
+              "url": "https://user@example.test/private"
+            }
+          },
+          "expect": {
+            "revision": 1,
+            "status": "present",
+            "visible": true,
+            "message": {
+              "id": "motd-c",
+              "title": "Read more",
+              "body": "Unsafe actions are omitted."
+            },
+            "error": null,
+            "dismissedId": null
+          }
+        }
+      ]
+    }
+  ]
+}
