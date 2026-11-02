@@ -1,0 +1,25 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.0.0",
+	"FriendlyName": "Haiven Lyra Demo",
+	"Description": "Demo integration of the Haiven SDK into Epic's Lyra sample: player status, message of the day, moderated chat and a reward claim, driven only by the Haiven plugin's public API.",
+	"Category": "Haiven",
+	"CreatedBy": "Haiven",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "HaivenLyraDemo",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "Haiven",
+			"Enabled": true
+		}
+	]
+}
