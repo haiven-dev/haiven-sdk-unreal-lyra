@@ -17,6 +17,8 @@
 #pragma once
 
 #include "Containers/Ticker.h"
+#include "Delegates/Delegate.h"
+#include "Engine/EngineBaseTypes.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "HaivenLyraMotdProjection.h"
 #include "HaivenRewards.h"
@@ -24,10 +26,15 @@
 #include "HaivenLyraDemoSubsystem.generated.h"
 
 class FHaivenLyraChatInput;
+class FHaivenLyraDemoAnalytics;
+class FHaivenLyraHostLossState;
+class FHaivenAnalytics;
 class UHaivenLyraChatWidget;
 class UHaivenLyraMotdWidget;
 class UHaivenRealtimeEvents;
 class UHaivenSubsystem;
+class UNetDriver;
+class UWorld;
 enum class EHaivenRealtimeState : uint8;
 struct FHaivenChatMessageV0;
 struct FHaivenEntitlementsUpdatedV0;
@@ -104,7 +111,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Haiven|Lyra Demo|Sign In")
 	FString GetSignInError() const { return SignInError; }
 
-	/** When the current bearer expires, from the exchange's expires_in or the token itself. */
+	/** When the current bearer expires, from exchange or explicit host metadata. */
 	UFUNCTION(BlueprintPure, Category = "Haiven|Lyra Demo|Sign In")
 	FDateTime GetSignInExpiresAtUtc() const { return SignInExpiresAtUtc; }
 
@@ -126,6 +133,12 @@ public:
 	/** Returns keyboard focus to the game after a message is sent. */
 	UFUNCTION(BlueprintCallable, Category = "Haiven|Lyra Demo|Chat")
 	void ReleaseChat();
+
+	/** Collapses the chat and rewards drawers, retaining their edge handles. */
+	void CollapseMainPanels();
+
+	/** Collapses the MOTD drawer, retaining its edge handle when a message exists. */
+	void CollapseMotdPanel();
 
 	UFUNCTION(BlueprintPure, Category = "Haiven|Lyra Demo|Chat")
 	bool IsChatFocused() const { return bChatFocused; }
@@ -178,9 +191,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Haiven|Lyra Demo|Status")
 	FText GetStatusText() const;
 
-	/** Item entitlement codes announced this session. */
+	/** Empty during normal play; explicit terminal match state after the listen host is lost. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Lyra Demo|Status")
+	FText GetHostLossStatus() const;
+
+	/** Item entitlement codes active in the most recent account projection. */
 	UFUNCTION(BlueprintPure, Category = "Haiven|Lyra Demo|Inventory")
-	TArray<FString> GetEntitledItems() const { return GrantedItems.Array(); }
+	TArray<FString> GetEntitledItems() const { return ActiveEntitledItems.Array(); }
 
 	/** Fires after each finished claim, whichever way it ended. */
 	UPROPERTY(BlueprintAssignable, Category = "Haiven|Lyra Demo|Rewards")
@@ -249,17 +266,28 @@ private:
 	void BindHaiven();
 	void UnbindHaiven();
 	void Connect();
+	void AttachAnalytics();
+	void DetachAnalytics();
 	void SetSignInState(EHaivenLyraSignInState State, const FString& Error = FString());
 	void EnterSignedIn(const FDateTime& ExpiresAtUtc);
 	void ScheduleExpiryCheck();
 	void ClearExpiryCheck();
+	/** Drop a launch-token realtime connect that has not run yet. */
+	void CancelPendingRealtimeConnect();
 	/** Ends a signed-in session whose bearer has expired at Now. */
 	void UpdateExpiry(const FDateTime& Now);
 	void Expire();
 	void RefreshAccount();
 	void Note(const FText& Line) const;
 	void ApplyMotdPresentation() const;
+	/** Start the public MOTD read and show its loading state. */
+	void StartMotdRead();
 	void ApplyStatus();
+	void HandleNetworkFailure(
+		UWorld* World,
+		UNetDriver* NetDriver,
+		ENetworkFailure::Type FailureType,
+		const FString& ErrorString);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UHaivenSubsystem> Haiven;
@@ -274,12 +302,16 @@ private:
 	TObjectPtr<UHaivenLyraMotdWidget> MotdPanel;
 
 	TSharedPtr<FHaivenLyraChatInput> ChatInput;
+	TSharedPtr<FHaivenLyraDemoAnalytics> DemoAnalytics;
+	TSharedPtr<FHaivenLyraHostLossState> HostLossState;
+	TSharedPtr<FHaivenAnalytics, ESPMode::ThreadSafe> AnalyticsBridge;
 	FString ChannelId;
 	FString AccountName;
 	FString ModerationStatus;
 	FString RewardStatus;
 	bool bClaimInFlight = false;
-	TSet<FString> GrantedItems;
+	TSet<FString> ActiveEntitledItems;
+	TSet<FString> AnnouncedItems;
 	FHaivenLyraMotdState MotdState;
 	FString MotdRequestId;
 	uint64 MotdRequestSequence = 0;
@@ -288,4 +320,6 @@ private:
 	FString SignInError;
 	FDateTime SignInExpiresAtUtc;
 	FTSTicker::FDelegateHandle ExpiryCheck;
+	FTSTicker::FDelegateHandle PendingRealtimeConnect;
+	FDelegateHandle NetworkFailureHandle;
 };

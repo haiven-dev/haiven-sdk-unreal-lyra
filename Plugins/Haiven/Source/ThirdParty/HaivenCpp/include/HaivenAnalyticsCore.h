@@ -226,8 +226,7 @@ namespace Haiven
 		static bool IsEventType(const std::string& Type)
 		{
 			return Type == "game.launch" || Type == "session.start" || Type == "session.end"
-				|| Type == "playtime" || Type == "chat.message.sent" || Type == "reward.claimed"
-				|| Type == "sdk.health";
+				|| Type == "playtime" || Type == "sdk.health";
 		}
 
 		static bool ValidateProperties(RestTypes::AnalyticsEvent& Event, std::string& Error)

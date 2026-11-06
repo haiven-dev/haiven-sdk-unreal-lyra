@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A refresh hint that the signed-in account's entitlements changed, sent to its open sockets after the change commits. It carries no grants and authorizes nothing: re-read GET /users/me/entitlements unless that read already returned this projection version or a later one.
 	struct EntitlementsUpdatedV0
 	{
 		/// The account's entitlement projection version after the change; it only increases.

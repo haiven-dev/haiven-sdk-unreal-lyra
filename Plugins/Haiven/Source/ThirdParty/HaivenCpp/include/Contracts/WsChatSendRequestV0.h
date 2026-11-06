@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The payload a client sends on a chat.send frame, posting a message to a channel.
 	struct WsChatSendRequestV0
 	{
 		/// The channel to post the message to.

@@ -22,6 +22,7 @@ namespace Haiven
 		int Count;
 	};
 
+	/// Frames discarded after a WebSocket session expired.
 	struct WsAuthExpiredDroppedV0
 	{
 		/// The number of values represented by this object.

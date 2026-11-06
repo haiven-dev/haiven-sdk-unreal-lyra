@@ -11,6 +11,7 @@
 // does by dispatching to its game thread. Nothing here locks.
 #pragma once
 
+#include "HaivenCredentialLifecycle.h"
 #include "HaivenFrames.h"
 #include "HaivenRestApi.h"
 #include "HaivenSessionCore.h"

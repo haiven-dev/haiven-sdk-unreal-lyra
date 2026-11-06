@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The input a client hands to the embedded policy evaluator for one piece of content.
 	struct ContentSafetyInputV1
 	{
 		/// Kind of content being assessed, such as chat-message.

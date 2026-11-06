@@ -129,6 +129,149 @@ void UHaivenRestGetAgeGateRequirementsAsyncAction::Finish(const FHaivenHttpResul
 	SetReadyToDestroy();
 }
 
+UHaivenRestGetAnnouncementsAsyncAction* UHaivenRestGetAnnouncementsAsyncAction::RestGetAnnouncements(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, bool bHasCategory, const FString& Category, bool bHasLimit, int64 Limit, bool bHasOffset, int64 Offset)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::GetAnnouncements(bHasCategory ? std::optional<std::string>(HaivenBlueprintRestOperationsDetail::ToUtf8(Category)) : std::optional<std::string>(), bHasLimit ? std::optional<std::int64_t>(static_cast<std::int64_t>(Limit)) : std::optional<std::int64_t>(), bHasOffset ? std::optional<std::int64_t>(static_cast<std::int64_t>(Offset)) : std::optional<std::int64_t>());
+	UHaivenRestGetAnnouncementsAsyncAction* Action = NewObject<UHaivenRestGetAnnouncementsAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestGetAnnouncementsAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestGetAnnouncementsAsyncAction::Finish));
+}
+
+void UHaivenRestGetAnnouncementsAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestGetAnnouncementsAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Haiven::RestTypes::AnnouncementPage Parsed;
+	FHaivenHttpResult Unreadable;
+	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
+	{
+		Failed.Broadcast(Unreadable);
+		SetReadyToDestroy();
+		return;
+	}
+	FHaivenRestAnnouncementPage Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
+	Completed.Broadcast(Result, Payload);
+	SetReadyToDestroy();
+}
+
+UHaivenRestPostAnnouncementsLastReadAnnouncementIdAsyncAction* UHaivenRestPostAnnouncementsLastReadAnnouncementIdAsyncAction::RestPostAnnouncementsLastReadAnnouncementId(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& AnnouncementId)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::PostAnnouncementsLastReadAnnouncementId(HaivenBlueprintRestOperationsDetail::ToUtf8(AnnouncementId));
+	UHaivenRestPostAnnouncementsLastReadAnnouncementIdAsyncAction* Action = NewObject<UHaivenRestPostAnnouncementsLastReadAnnouncementIdAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestPostAnnouncementsLastReadAnnouncementIdAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestPostAnnouncementsLastReadAnnouncementIdAsyncAction::Finish));
+}
+
+void UHaivenRestPostAnnouncementsLastReadAnnouncementIdAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestPostAnnouncementsLastReadAnnouncementIdAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Completed.Broadcast(Result);
+	SetReadyToDestroy();
+}
+
+UHaivenRestGetAnnouncementsUnreadAsyncAction* UHaivenRestGetAnnouncementsUnreadAsyncAction::RestGetAnnouncementsUnread(UObject* WorldContextObject, UHaivenSubsystem* Subsystem)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::GetAnnouncementsUnread();
+	UHaivenRestGetAnnouncementsUnreadAsyncAction* Action = NewObject<UHaivenRestGetAnnouncementsUnreadAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestGetAnnouncementsUnreadAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestGetAnnouncementsUnreadAsyncAction::Finish));
+}
+
+void UHaivenRestGetAnnouncementsUnreadAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestGetAnnouncementsUnreadAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Haiven::RestTypes::UnreadCount Parsed;
+	FHaivenHttpResult Unreadable;
+	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
+	{
+		Failed.Broadcast(Unreadable);
+		SetReadyToDestroy();
+		return;
+	}
+	FHaivenRestUnreadCount Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
+	Completed.Broadcast(Result, Payload);
+	SetReadyToDestroy();
+}
+
 UHaivenRestGetAppsAsyncAction* UHaivenRestGetAppsAsyncAction::RestGetApps(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, bool bHasQ, const FString& Q, bool bHasTag, const TArray<FString>& Tag, bool bHasPlatform, const FString& Platform, bool bHasEarlyAccess, bool EarlyAccess, bool bHasSort, const FString& Sort, bool bHasLimit, int64 Limit, bool bHasOffset, int64 Offset)
 {
 	const Haiven::Rest::FRestRequest Request = Haiven::Rest::GetApps(bHasQ ? std::optional<std::string>(HaivenBlueprintRestOperationsDetail::ToUtf8(Q)) : std::optional<std::string>(), bHasTag ? std::optional<std::vector<std::string>>(HaivenBlueprintRestOperationsDetail::Strings(Tag)) : std::optional<std::vector<std::string>>(), bHasPlatform ? std::optional<std::string>(HaivenBlueprintRestOperationsDetail::ToUtf8(Platform)) : std::optional<std::string>(), bHasEarlyAccess ? std::optional<bool>(EarlyAccess) : std::optional<bool>(), bHasSort ? std::optional<std::string>(HaivenBlueprintRestOperationsDetail::ToUtf8(Sort)) : std::optional<std::string>(), bHasLimit ? std::optional<std::int64_t>(static_cast<std::int64_t>(Limit)) : std::optional<std::int64_t>(), bHasOffset ? std::optional<std::int64_t>(static_cast<std::int64_t>(Offset)) : std::optional<std::int64_t>());
@@ -2825,6 +2968,435 @@ void UHaivenRestPostChatMessagesMessageIdReportAsyncAction::Finish(const FHaiven
 	SetReadyToDestroy();
 }
 
+UHaivenRestGetGamesGameIdAccessAsyncAction* UHaivenRestGetGamesGameIdAccessAsyncAction::RestGetGamesGameIdAccess(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::GetGamesGameIdAccess(static_cast<std::int64_t>(GameId));
+	UHaivenRestGetGamesGameIdAccessAsyncAction* Action = NewObject<UHaivenRestGetGamesGameIdAccessAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestGetGamesGameIdAccessAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestGetGamesGameIdAccessAsyncAction::Finish));
+}
+
+void UHaivenRestGetGamesGameIdAccessAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestGetGamesGameIdAccessAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Haiven::RestTypes::GameAccessResponse Parsed;
+	FHaivenHttpResult Unreadable;
+	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
+	{
+		Failed.Broadcast(Unreadable);
+		SetReadyToDestroy();
+		return;
+	}
+	FHaivenRestGameAccessResponse Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
+	Completed.Broadcast(Result, Payload);
+	SetReadyToDestroy();
+}
+
+UHaivenRestGetGamesGameIdSessionsAsyncAction* UHaivenRestGetGamesGameIdSessionsAsyncAction::RestGetGamesGameIdSessions(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, bool bHasCursor, const FString& Cursor, bool bHasLimit, int64 Limit)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::GetGamesGameIdSessions(static_cast<std::int64_t>(GameId), bHasCursor ? std::optional<std::string>(HaivenBlueprintRestOperationsDetail::ToUtf8(Cursor)) : std::optional<std::string>(), bHasLimit ? std::optional<std::int64_t>(static_cast<std::int64_t>(Limit)) : std::optional<std::int64_t>());
+	UHaivenRestGetGamesGameIdSessionsAsyncAction* Action = NewObject<UHaivenRestGetGamesGameIdSessionsAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestGetGamesGameIdSessionsAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestGetGamesGameIdSessionsAsyncAction::Finish));
+}
+
+void UHaivenRestGetGamesGameIdSessionsAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestGetGamesGameIdSessionsAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Haiven::RestTypes::SessionList Parsed;
+	FHaivenHttpResult Unreadable;
+	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
+	{
+		Failed.Broadcast(Unreadable);
+		SetReadyToDestroy();
+		return;
+	}
+	FHaivenRestSessionList Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
+	Completed.Broadcast(Result, Payload);
+	SetReadyToDestroy();
+}
+
+UHaivenRestPostGamesGameIdSessionsAsyncAction* UHaivenRestPostGamesGameIdSessionsAsyncAction::RestPostGamesGameIdSessions(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FHaivenRestCreateRequest& Body)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::PostGamesGameIdSessions(static_cast<std::int64_t>(GameId), Haiven::ContractsJson::ToJson(Haiven::Blueprint::ToCpp(Body)));
+	UHaivenRestPostGamesGameIdSessionsAsyncAction* Action = NewObject<UHaivenRestPostGamesGameIdSessionsAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestPostGamesGameIdSessionsAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestPostGamesGameIdSessionsAsyncAction::Finish));
+}
+
+void UHaivenRestPostGamesGameIdSessionsAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestPostGamesGameIdSessionsAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Haiven::RestTypes::CreateResponse Parsed;
+	FHaivenHttpResult Unreadable;
+	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
+	{
+		Failed.Broadcast(Unreadable);
+		SetReadyToDestroy();
+		return;
+	}
+	FHaivenRestCreateResponse Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
+	Completed.Broadcast(Result, Payload);
+	SetReadyToDestroy();
+}
+
+UHaivenRestGetGamesGameIdSessionsSessionIdAsyncAction* UHaivenRestGetGamesGameIdSessionsSessionIdAsyncAction::RestGetGamesGameIdSessionsSessionId(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::GetGamesGameIdSessionsSessionId(static_cast<std::int64_t>(GameId), HaivenBlueprintRestOperationsDetail::ToUtf8(SessionId));
+	UHaivenRestGetGamesGameIdSessionsSessionIdAsyncAction* Action = NewObject<UHaivenRestGetGamesGameIdSessionsSessionIdAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestGetGamesGameIdSessionsSessionIdAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestGetGamesGameIdSessionsSessionIdAsyncAction::Finish));
+}
+
+void UHaivenRestGetGamesGameIdSessionsSessionIdAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestGetGamesGameIdSessionsSessionIdAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Haiven::RestTypes::Roster Parsed;
+	FHaivenHttpResult Unreadable;
+	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
+	{
+		Failed.Broadcast(Unreadable);
+		SetReadyToDestroy();
+		return;
+	}
+	FHaivenRestRoster Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
+	Completed.Broadcast(Result, Payload);
+	SetReadyToDestroy();
+}
+
+UHaivenRestPatchGamesGameIdSessionsSessionIdAsyncAction* UHaivenRestPatchGamesGameIdSessionsSessionIdAsyncAction::RestPatchGamesGameIdSessionsSessionId(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId, const FHaivenRestUpdateRequest& Body)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::PatchGamesGameIdSessionsSessionId(static_cast<std::int64_t>(GameId), HaivenBlueprintRestOperationsDetail::ToUtf8(SessionId), Haiven::ContractsJson::ToJson(Haiven::Blueprint::ToCpp(Body)));
+	UHaivenRestPatchGamesGameIdSessionsSessionIdAsyncAction* Action = NewObject<UHaivenRestPatchGamesGameIdSessionsSessionIdAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestPatchGamesGameIdSessionsSessionIdAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestPatchGamesGameIdSessionsSessionIdAsyncAction::Finish));
+}
+
+void UHaivenRestPatchGamesGameIdSessionsSessionIdAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestPatchGamesGameIdSessionsSessionIdAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Haiven::RestTypes::Roster Parsed;
+	FHaivenHttpResult Unreadable;
+	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
+	{
+		Failed.Broadcast(Unreadable);
+		SetReadyToDestroy();
+		return;
+	}
+	FHaivenRestRoster Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
+	Completed.Broadcast(Result, Payload);
+	SetReadyToDestroy();
+}
+
+UHaivenRestPostGamesGameIdSessionsSessionIdInvitesAsyncAction* UHaivenRestPostGamesGameIdSessionsSessionIdInvitesAsyncAction::RestPostGamesGameIdSessionsSessionIdInvites(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId, const FHaivenRestInviteRequest& Body)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::PostGamesGameIdSessionsSessionIdInvites(static_cast<std::int64_t>(GameId), HaivenBlueprintRestOperationsDetail::ToUtf8(SessionId), Haiven::ContractsJson::ToJson(Haiven::Blueprint::ToCpp(Body)));
+	UHaivenRestPostGamesGameIdSessionsSessionIdInvitesAsyncAction* Action = NewObject<UHaivenRestPostGamesGameIdSessionsSessionIdInvitesAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestPostGamesGameIdSessionsSessionIdInvitesAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestPostGamesGameIdSessionsSessionIdInvitesAsyncAction::Finish));
+}
+
+void UHaivenRestPostGamesGameIdSessionsSessionIdInvitesAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestPostGamesGameIdSessionsSessionIdInvitesAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Completed.Broadcast(Result);
+	SetReadyToDestroy();
+}
+
+UHaivenRestPostGamesGameIdSessionsSessionIdMembersAsyncAction* UHaivenRestPostGamesGameIdSessionsSessionIdMembersAsyncAction::RestPostGamesGameIdSessionsSessionIdMembers(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId, const FHaivenRestJoinRequest& Body)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::PostGamesGameIdSessionsSessionIdMembers(static_cast<std::int64_t>(GameId), HaivenBlueprintRestOperationsDetail::ToUtf8(SessionId), Haiven::ContractsJson::ToJson(Haiven::Blueprint::ToCpp(Body)));
+	UHaivenRestPostGamesGameIdSessionsSessionIdMembersAsyncAction* Action = NewObject<UHaivenRestPostGamesGameIdSessionsSessionIdMembersAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestPostGamesGameIdSessionsSessionIdMembersAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestPostGamesGameIdSessionsSessionIdMembersAsyncAction::Finish));
+}
+
+void UHaivenRestPostGamesGameIdSessionsSessionIdMembersAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestPostGamesGameIdSessionsSessionIdMembersAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Haiven::RestTypes::JoinResponse Parsed;
+	FHaivenHttpResult Unreadable;
+	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
+	{
+		Failed.Broadcast(Unreadable);
+		SetReadyToDestroy();
+		return;
+	}
+	FHaivenRestJoinResponse Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
+	Completed.Broadcast(Result, Payload);
+	SetReadyToDestroy();
+}
+
+UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersMeAsyncAction* UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersMeAsyncAction::RestDeleteGamesGameIdSessionsSessionIdMembersMe(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::DeleteGamesGameIdSessionsSessionIdMembersMe(static_cast<std::int64_t>(GameId), HaivenBlueprintRestOperationsDetail::ToUtf8(SessionId));
+	UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersMeAsyncAction* Action = NewObject<UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersMeAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersMeAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersMeAsyncAction::Finish));
+}
+
+void UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersMeAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersMeAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Completed.Broadcast(Result);
+	SetReadyToDestroy();
+}
+
+UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersUserIdAsyncAction* UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersUserIdAsyncAction::RestDeleteGamesGameIdSessionsSessionIdMembersUserId(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId, const FString& UserId)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::DeleteGamesGameIdSessionsSessionIdMembersUserId(static_cast<std::int64_t>(GameId), HaivenBlueprintRestOperationsDetail::ToUtf8(SessionId), HaivenBlueprintRestOperationsDetail::ToUtf8(UserId));
+	UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersUserIdAsyncAction* Action = NewObject<UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersUserIdAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersUserIdAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersUserIdAsyncAction::Finish));
+}
+
+void UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersUserIdAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersUserIdAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Completed.Broadcast(Result);
+	SetReadyToDestroy();
+}
+
 UHaivenRestPostHooksKidAsyncAction* UHaivenRestPostHooksKidAsyncAction::RestPostHooksKid(UObject* WorldContextObject, UHaivenSubsystem* Subsystem)
 {
 	const Haiven::Rest::FRestRequest Request = Haiven::Rest::PostHooksKid();
@@ -5265,6 +5837,57 @@ void UHaivenRestGetStudiosStudioIdAppsAppIdIntegrationsIntegrationIdHealthAsyncA
 	SetReadyToDestroy();
 }
 
+UHaivenRestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUrisAsyncAction* UHaivenRestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUrisAsyncAction::RestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUris(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& StudioId, const FString& AppId, const FString& IntegrationId, const FHaivenRestSetRedirectURIsRequest& Body)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::PutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUris(HaivenBlueprintRestOperationsDetail::ToUtf8(StudioId), HaivenBlueprintRestOperationsDetail::ToUtf8(AppId), HaivenBlueprintRestOperationsDetail::ToUtf8(IntegrationId), Haiven::ContractsJson::ToJson(Haiven::Blueprint::ToCpp(Body)));
+	UHaivenRestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUrisAsyncAction* Action = NewObject<UHaivenRestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUrisAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUrisAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUrisAsyncAction::Finish));
+}
+
+void UHaivenRestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUrisAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUrisAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Haiven::RestTypes::IntegrationResponse Parsed;
+	FHaivenHttpResult Unreadable;
+	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
+	{
+		Failed.Broadcast(Unreadable);
+		SetReadyToDestroy();
+		return;
+	}
+	FHaivenRestIntegrationResponse Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
+	Completed.Broadcast(Result, Payload);
+	SetReadyToDestroy();
+}
+
 UHaivenRestGetStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRewardsAsyncAction* UHaivenRestGetStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRewardsAsyncAction::RestGetStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRewards(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& StudioId, const FString& AppId, const FString& IntegrationId)
 {
 	const Haiven::Rest::FRestRequest Request = Haiven::Rest::GetStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRewards(HaivenBlueprintRestOperationsDetail::ToUtf8(StudioId), HaivenBlueprintRestOperationsDetail::ToUtf8(AppId), HaivenBlueprintRestOperationsDetail::ToUtf8(IntegrationId));
@@ -5875,6 +6498,57 @@ void UHaivenRestPatchStudiosStudioIdAppsAppIdMediaOrderAsyncAction::Finish(const
 		return;
 	}
 	Completed.Broadcast(Result);
+	SetReadyToDestroy();
+}
+
+UHaivenRestPutStudiosStudioIdAppsAppIdOfficialCommunityAsyncAction* UHaivenRestPutStudiosStudioIdAppsAppIdOfficialCommunityAsyncAction::RestPutStudiosStudioIdAppsAppIdOfficialCommunity(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& StudioId, const FString& AppId, const FHaivenRestSetAppOfficialCommunityRequest& Body)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::PutStudiosStudioIdAppsAppIdOfficialCommunity(HaivenBlueprintRestOperationsDetail::ToUtf8(StudioId), HaivenBlueprintRestOperationsDetail::ToUtf8(AppId), Haiven::ContractsJson::ToJson(Haiven::Blueprint::ToCpp(Body)));
+	UHaivenRestPutStudiosStudioIdAppsAppIdOfficialCommunityAsyncAction* Action = NewObject<UHaivenRestPutStudiosStudioIdAppsAppIdOfficialCommunityAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestPutStudiosStudioIdAppsAppIdOfficialCommunityAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestPutStudiosStudioIdAppsAppIdOfficialCommunityAsyncAction::Finish));
+}
+
+void UHaivenRestPutStudiosStudioIdAppsAppIdOfficialCommunityAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestPutStudiosStudioIdAppsAppIdOfficialCommunityAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Haiven::RestTypes::App Parsed;
+	FHaivenHttpResult Unreadable;
+	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
+	{
+		Failed.Broadcast(Unreadable);
+		SetReadyToDestroy();
+		return;
+	}
+	FHaivenRestApp Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
+	Completed.Broadcast(Result, Payload);
 	SetReadyToDestroy();
 }
 
@@ -9049,7 +9723,7 @@ void UHaivenRestGetUsersMeGameCredentialsAsyncAction::Finish(const FHaivenHttpRe
 		SetReadyToDestroy();
 		return;
 	}
-	std::vector<Haiven::RestTypes::GameCredentialRecord> Parsed;
+	Haiven::RestTypes::GameCredentialsResponse Parsed;
 	FHaivenHttpResult Unreadable;
 	if (!HaivenBlueprintRestOperationsDetail::ReadReply(Result, Parsed, Unreadable))
 	{
@@ -9057,9 +9731,50 @@ void UHaivenRestGetUsersMeGameCredentialsAsyncAction::Finish(const FHaivenHttpRe
 		SetReadyToDestroy();
 		return;
 	}
-	TArray<FHaivenRestGameCredentialRecord> Payload;
-	for (const auto& Item : Parsed) Payload.Add(Haiven::Blueprint::FromCpp(Item));
+	FHaivenRestGameCredentialsResponse Payload;
+	Payload = Haiven::Blueprint::FromCpp(Parsed);
 	Completed.Broadcast(Result, Payload);
+	SetReadyToDestroy();
+}
+
+UHaivenRestDeleteUsersMeGameCredentialsAsyncAction* UHaivenRestDeleteUsersMeGameCredentialsAsyncAction::RestDeleteUsersMeGameCredentials(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& IntegrationId)
+{
+	const Haiven::Rest::FRestRequest Request = Haiven::Rest::DeleteUsersMeGameCredentials(HaivenBlueprintRestOperationsDetail::ToUtf8(IntegrationId));
+	UHaivenRestDeleteUsersMeGameCredentialsAsyncAction* Action = NewObject<UHaivenRestDeleteUsersMeGameCredentialsAsyncAction>();
+	Action->Owner = Subsystem;
+	Action->Method = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Method);
+	Action->Path = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Path);
+	Action->Body = HaivenBlueprintRestOperationsDetail::FromUtf8(Request.Body);
+	Action->RegisterWithGameInstance(WorldContextObject);
+	return Action;
+}
+
+void UHaivenRestDeleteUsersMeGameCredentialsAsyncAction::Activate()
+{
+	if (!Owner)
+	{
+		FHaivenHttpResult Result;
+		Result.Error = TEXT("The Haiven subsystem is unavailable.");
+		Finish(Result);
+		return;
+	}
+	Handle = Owner->Request(Method, Path, Body, FHaivenHttpComplete::CreateUObject(this, &UHaivenRestDeleteUsersMeGameCredentialsAsyncAction::Finish));
+}
+
+void UHaivenRestDeleteUsersMeGameCredentialsAsyncAction::Cancel()
+{
+	if (Owner && Handle.IsValid()) Owner->CancelHttpRequest(Handle);
+}
+
+void UHaivenRestDeleteUsersMeGameCredentialsAsyncAction::Finish(const FHaivenHttpResult& Result)
+{
+	if (!Result.bSucceeded)
+	{
+		Failed.Broadcast(Result);
+		SetReadyToDestroy();
+		return;
+	}
+	Completed.Broadcast(Result);
 	SetReadyToDestroy();
 }
 

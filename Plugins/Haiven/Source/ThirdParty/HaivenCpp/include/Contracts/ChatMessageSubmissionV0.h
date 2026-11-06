@@ -60,6 +60,7 @@ namespace Haiven
 		std::optional<std::string> UpdatedAt;
 	};
 
+	/// The accepted message projection and its current moderation state.
 	struct ChatMessageSubmissionV0
 	{
 		/// The accepted chat message projection.

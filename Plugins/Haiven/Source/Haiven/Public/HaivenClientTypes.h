@@ -25,6 +25,24 @@ struct HAIVEN_API FHaivenClientOptions
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven")
 	FString AppId;
+
+	/**
+	 * Reconnect realtime after the socket closes or fails unexpectedly, and
+	 * authenticate the new socket with the current access token. Delays grow
+	 * exponentially from RealtimeReconnectInitialDelaySeconds up to
+	 * RealtimeReconnectMaxDelaySeconds, with jitter. DisconnectRealtime, Logout
+	 * and an account change never reconnect, and neither does a socket the server
+	 * refused for the account (a refused credential, a revoked game credential or
+	 * a parental-consent lock).
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Realtime")
+	bool bReconnectRealtime = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Realtime", meta = (ClampMin = "0.1"))
+	float RealtimeReconnectInitialDelaySeconds = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Realtime", meta = (ClampMin = "0.1"))
+	float RealtimeReconnectMaxDelaySeconds = 30.0f;
 };
 
 USTRUCT(BlueprintType)

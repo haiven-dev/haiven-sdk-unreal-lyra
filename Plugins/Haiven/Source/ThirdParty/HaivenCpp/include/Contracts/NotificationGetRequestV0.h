@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A notification lookup request.
 	struct NotificationGetRequestV0
 	{
 		/// The stable identifier of this value.

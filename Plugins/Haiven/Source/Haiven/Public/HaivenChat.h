@@ -75,7 +75,7 @@ struct HAIVEN_API FHaivenOutgoingChatMessage
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenOutgoingChatChanged, const FHaivenOutgoingChatMessage&, Message);
 
 /**
- * The engine-side half of the plugin's chat (HAVN-1180): owns the C++ SDK's
+ * The engine-side half of the plugin's chat: owns the C++ SDK's
  * Haiven::FChatCore, decodes its chat.send replies with the generated contract
  * codec, and presents its outbox in Blueprint types. UHaivenSubsystem owns one
  * and routes every realtime session into it; it is public so a game (and the

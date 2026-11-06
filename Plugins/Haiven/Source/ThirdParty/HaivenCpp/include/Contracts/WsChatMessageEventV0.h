@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The payload of a chat message event.
 	struct WsChatMessageEventV0
 	{
 		/// The channel the message belongs to.

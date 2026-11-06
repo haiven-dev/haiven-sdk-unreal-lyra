@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A user's typing state in a chat channel.
 	struct ChatTypingV0
 	{
 		/// The chat channel identifier.

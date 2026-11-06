@@ -39,6 +39,26 @@ namespace
 		Value.clear();
 	}
 
+	Haiven::FHandoffCredential ToEngine(const Haiven::Handoff::FCredential& Credential)
+	{
+		Haiven::FHandoffCredential Engine;
+		Engine.AccessToken = FromUtf8(Credential.AccessToken);
+		Engine.TokenType = FromUtf8(Credential.TokenType);
+		Engine.bHasExpiry = Credential.bHasExpiry;
+		Engine.ExpiresAt = Credential.bHasExpiry ? FDateTime(Credential.ExpiresAt.count()) : FDateTime();
+		return Engine;
+	}
+
+	Haiven::Handoff::FCredential ToCore(const Haiven::FHandoffCredential& Credential)
+	{
+		Haiven::Handoff::FCredential Core;
+		Core.AccessToken = ToUtf8(Credential.AccessToken);
+		Core.TokenType = ToUtf8(Credential.TokenType);
+		Core.bHasExpiry = Credential.bHasExpiry;
+		Core.ExpiresAt = Credential.bHasExpiry ? Ticks(Credential.ExpiresAt) : Haiven::Handoff::FTicks::zero();
+		return Core;
+	}
+
 	Haiven::Handoff::FConfig ToCore(const Haiven::FHandoffConfig& Config)
 	{
 		Haiven::Handoff::FConfig Core;
@@ -136,9 +156,7 @@ namespace Haiven
 			OutError = FromUtf8(Error);
 			return false;
 		}
-		OutCredential.AccessToken = FromUtf8(Credential.AccessToken);
-		OutCredential.TokenType = FromUtf8(Credential.TokenType);
-		OutCredential.ExpiresAt = FDateTime(Credential.ExpiresAt.count());
+		OutCredential = ToEngine(Credential);
 		return true;
 	}
 
@@ -153,6 +171,66 @@ namespace Haiven
 	void FHandoffCore::ClearCredential()
 	{
 		Core.ClearCredential();
+	}
+
+	void FHandoffCore::SetCredentialStore(TSharedPtr<IHandoffCredentialStore> Store)
+	{
+		StoreBridge.Target = MoveTemp(Store);
+		Core.SetCredentialStore(StoreBridge.Target.IsValid() ? &StoreBridge : nullptr);
+	}
+
+	bool FHandoffCore::Resume(const FDateTime& Now, FHandoffCredential& OutCredential)
+	{
+		Handoff::FCredential Credential;
+		if (!Core.Resume(Ticks(Now), Credential)) return false;
+		OutCredential = ToEngine(Credential);
+		return true;
+	}
+
+	bool FHandoffCore::FStoreBridge::Load(Handoff::FCredential& OutCredential)
+	{
+		FHandoffCredential Saved;
+		if (!Target.IsValid() || !Target->Load(Saved)) return false;
+		OutCredential = ToCore(Saved);
+		return true;
+	}
+
+	void FHandoffCore::FStoreBridge::Store(const Handoff::FCredential& Credential)
+	{
+		if (Target.IsValid()) Target->Store(ToEngine(Credential));
+	}
+
+	void FHandoffCore::FStoreBridge::Clear()
+	{
+		if (Target.IsValid()) Target->Clear();
+	}
+
+	bool FHandoffCore::Restart(
+		Handoff::ECredentialEndReason Reason,
+		const FHandoffConfig& Config,
+		TConstArrayView<uint8> StateEntropy,
+		TConstArrayView<uint8> VerifierEntropy,
+		const FDateTime& Now,
+		FString& OutAuthorizationUrl,
+		FString& OutState,
+		FString& OutError)
+	{
+		std::vector<std::uint8_t> State = Bytes(StateEntropy);
+		std::vector<std::uint8_t> Verifier = Bytes(VerifierEntropy);
+		std::string Url;
+		std::string StateText;
+		std::string Error;
+		const bool bBegan = Core.Restart(Reason, ToCore(Config), State, Verifier, Ticks(Now), Url, StateText, Error);
+		Wipe(State);
+		Wipe(Verifier);
+		if (!bBegan)
+		{
+			OutError = FromUtf8(Error);
+			return false;
+		}
+		OutAuthorizationUrl = FromUtf8(Url);
+		OutState = FromUtf8(StateText);
+		return true;
 	}
 
 	FString FHandoffCore::PkceChallenge(const FString& Verifier)

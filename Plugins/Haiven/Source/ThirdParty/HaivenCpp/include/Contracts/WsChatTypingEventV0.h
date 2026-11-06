@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The payload of a chat typing event.
 	struct WsChatTypingEventV0
 	{
 		/// The channel the typing state applies to.

@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The platform Message of the Day, sent once to a signed-in SDK connection right after auth.success while an admin-authored message is active. Web clients do not receive it.
 	struct MotdV0
 	{
 		/// The stable identifier of the message; a client that already showed it can skip it.

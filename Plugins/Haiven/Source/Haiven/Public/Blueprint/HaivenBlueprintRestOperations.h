@@ -18,6 +18,8 @@
 class UHaivenSubsystem;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestAgeGateRequirementsResponseCompleted, const FHaivenHttpResult&, Result, const FHaivenRestAgeGateRequirementsResponse&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestAnnouncementPageCompleted, const FHaivenHttpResult&, Result, const FHaivenRestAnnouncementPage&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestUnreadCountCompleted, const FHaivenHttpResult&, Result, const FHaivenRestUnreadCount&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestAppPageCompleted, const FHaivenHttpResult&, Result, const FHaivenRestAppPage&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestTagListCompleted, const FHaivenHttpResult&, Result, const TArray<FHaivenRestTag>&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestStoreAppCompleted, const FHaivenHttpResult&, Result, const FHaivenRestStoreApp&, Payload);
@@ -52,6 +54,11 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestDMListCompleted, const F
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestDMCompleted, const FHaivenHttpResult&, Result, const FHaivenRestDM&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestMessageSubmissionCompleted, const FHaivenHttpResult&, Result, const FHaivenRestMessageSubmission&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestMessageEventCompleted, const FHaivenHttpResult&, Result, const FHaivenRestMessageEvent&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestGameAccessResponseCompleted, const FHaivenHttpResult&, Result, const FHaivenRestGameAccessResponse&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestSessionListCompleted, const FHaivenHttpResult&, Result, const FHaivenRestSessionList&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestCreateResponseCompleted, const FHaivenHttpResult&, Result, const FHaivenRestCreateResponse&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestRosterCompleted, const FHaivenHttpResult&, Result, const FHaivenRestRoster&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestJoinResponseCompleted, const FHaivenHttpResult&, Result, const FHaivenRestJoinResponse&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestWebhookResponseCompleted, const FHaivenHttpResult&, Result, const FHaivenRestWebhookResponse&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestRewardClaimResponseCompleted, const FHaivenHttpResult&, Result, const FHaivenRestRewardClaimResponse&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestDocumentResponseCompleted, const FHaivenHttpResult&, Result, const FHaivenRestDocumentResponse&, Payload);
@@ -117,7 +124,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestFriendRequestListComplet
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestUserRelationshipCompleted, const FHaivenHttpResult&, Result, const FHaivenRestUserRelationship&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestRemovedFriendCompleted, const FHaivenHttpResult&, Result, const FHaivenRestRemovedFriend&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestUserFriendSettingCompleted, const FHaivenHttpResult&, Result, const FHaivenRestUserFriendSetting&, Payload);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestGameCredentialRecordListCompleted, const FHaivenHttpResult&, Result, const TArray<FHaivenRestGameCredentialRecord>&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestGameCredentialsResponseCompleted, const FHaivenHttpResult&, Result, const FHaivenRestGameCredentialsResponse&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestInterestsCompleted, const FHaivenHttpResult&, Result, const FHaivenRestInterests&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestPresenceMessageCompleted, const FHaivenHttpResult&, Result, const FHaivenRestPresenceMessage&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRestAvailabilityCompleted, const FHaivenHttpResult&, Result, const FHaivenRestAvailability&, Payload);
@@ -147,6 +154,102 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FHaivenRestAgeGateRequirementsResponseCompleted Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestGetAnnouncementsAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** GET /announcements -- Announcements */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject", AdvancedDisplay = "bHasCategory,Category,bHasLimit,Limit,bHasOffset,Offset"), Category = "Haiven|REST")
+	static UHaivenRestGetAnnouncementsAsyncAction* RestGetAnnouncements(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, bool bHasCategory, const FString& Category, bool bHasLimit, int64 Limit, bool bHasOffset, int64 Offset);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRestAnnouncementPageCompleted Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestPostAnnouncementsLastReadAnnouncementIdAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** POST /announcements/last-read/{announcement_id} -- Mark announcements read */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestPostAnnouncementsLastReadAnnouncementIdAsyncAction* RestPostAnnouncementsLastReadAnnouncementId(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& AnnouncementId);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestGetAnnouncementsUnreadAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** GET /announcements/unread -- Unread announcement count */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestGetAnnouncementsUnreadAsyncAction* RestGetAnnouncementsUnread(UObject* WorldContextObject, UHaivenSubsystem* Subsystem);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRestUnreadCountCompleted Completed;
 
 	UPROPERTY(BlueprintAssignable)
 	FHaivenHttpAsyncOutput Failed;
@@ -1955,6 +2058,294 @@ private:
 };
 
 UCLASS()
+class HAIVEN_API UHaivenRestGetGamesGameIdAccessAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** GET /games/{game_id}/access -- Get my access to a game */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestGetGamesGameIdAccessAsyncAction* RestGetGamesGameIdAccess(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRestGameAccessResponseCompleted Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestGetGamesGameIdSessionsAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** GET /games/{game_id}/sessions -- List sessions I can join */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject", AdvancedDisplay = "bHasCursor,Cursor,bHasLimit,Limit"), Category = "Haiven|REST")
+	static UHaivenRestGetGamesGameIdSessionsAsyncAction* RestGetGamesGameIdSessions(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, bool bHasCursor, const FString& Cursor, bool bHasLimit, int64 Limit);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRestSessionListCompleted Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestPostGamesGameIdSessionsAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** POST /games/{game_id}/sessions -- Create a peer-to-peer session */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestPostGamesGameIdSessionsAsyncAction* RestPostGamesGameIdSessions(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FHaivenRestCreateRequest& Body);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRestCreateResponseCompleted Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestGetGamesGameIdSessionsSessionIdAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** GET /games/{game_id}/sessions/{session_id} -- Get a session's roster */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestGetGamesGameIdSessionsSessionIdAsyncAction* RestGetGamesGameIdSessionsSessionId(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRestRosterCompleted Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestPatchGamesGameIdSessionsSessionIdAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** PATCH /games/{game_id}/sessions/{session_id} -- Update a session */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestPatchGamesGameIdSessionsSessionIdAsyncAction* RestPatchGamesGameIdSessionsSessionId(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId, const FHaivenRestUpdateRequest& Body);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRestRosterCompleted Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestPostGamesGameIdSessionsSessionIdInvitesAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** POST /games/{game_id}/sessions/{session_id}/invites -- Invite a friend to a session */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestPostGamesGameIdSessionsSessionIdInvitesAsyncAction* RestPostGamesGameIdSessionsSessionIdInvites(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId, const FHaivenRestInviteRequest& Body);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestPostGamesGameIdSessionsSessionIdMembersAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** POST /games/{game_id}/sessions/{session_id}/members -- Join a peer-to-peer session */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestPostGamesGameIdSessionsSessionIdMembersAsyncAction* RestPostGamesGameIdSessionsSessionIdMembers(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId, const FHaivenRestJoinRequest& Body);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRestJoinResponseCompleted Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersMeAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** DELETE /games/{game_id}/sessions/{session_id}/members/me -- Leave a session */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersMeAsyncAction* RestDeleteGamesGameIdSessionsSessionIdMembersMe(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersUserIdAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** DELETE /games/{game_id}/sessions/{session_id}/members/{user_id} -- Kick a member */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestDeleteGamesGameIdSessionsSessionIdMembersUserIdAsyncAction* RestDeleteGamesGameIdSessionsSessionIdMembersUserId(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, int64 GameId, const FString& SessionId, const FString& UserId);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
 class HAIVEN_API UHaivenRestPostHooksKidAsyncAction : public UBlueprintAsyncActionBase
 {
 	GENERATED_BODY()
@@ -3555,6 +3946,38 @@ private:
 };
 
 UCLASS()
+class HAIVEN_API UHaivenRestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUrisAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** PUT /studios/{studio_id}/apps/{app_id}/integrations/{integration_id}/redirect-uris -- Set an integration's login redirect URIs */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUrisAsyncAction* RestPutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUris(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& StudioId, const FString& AppId, const FString& IntegrationId, const FHaivenRestSetRedirectURIsRequest& Body);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRestIntegrationResponseCompleted Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
 class HAIVEN_API UHaivenRestGetStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRewardsAsyncAction : public UBlueprintAsyncActionBase
 {
 	GENERATED_BODY()
@@ -3955,6 +4378,38 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FHaivenHttpAsyncOutput Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestPutStudiosStudioIdAppsAppIdOfficialCommunityAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** PUT /studios/{studio_id}/apps/{app_id}/official-community -- Bind an app's official community */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestPutStudiosStudioIdAppsAppIdOfficialCommunityAsyncAction* RestPutStudiosStudioIdAppsAppIdOfficialCommunity(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& StudioId, const FString& AppId, const FHaivenRestSetAppOfficialCommunityRequest& Body);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRestAppCompleted Completed;
 
 	UPROPERTY(BlueprintAssignable)
 	FHaivenHttpAsyncOutput Failed;
@@ -6024,7 +6479,7 @@ class HAIVEN_API UHaivenRestGetUsersMeGameCredentialsAsyncAction : public UBluep
 	GENERATED_BODY()
 
 public:
-	/** GET /users/me/game-credentials -- List issued game credentials */
+	/** GET /users/me/game-credentials -- List my connected games */
 	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
 	static UHaivenRestGetUsersMeGameCredentialsAsyncAction* RestGetUsersMeGameCredentials(UObject* WorldContextObject, UHaivenSubsystem* Subsystem);
 
@@ -6034,7 +6489,39 @@ public:
 	void Cancel();
 
 	UPROPERTY(BlueprintAssignable)
-	FHaivenRestGameCredentialRecordListCompleted Completed;
+	FHaivenRestGameCredentialsResponseCompleted Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Failed;
+
+private:
+	void Finish(const FHaivenHttpResult& Result);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString Method;
+	FString Path;
+	FString Body;
+	FGuid Handle;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenRestDeleteUsersMeGameCredentialsAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/** DELETE /users/me/game-credentials -- Disconnect a game */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
+	static UHaivenRestDeleteUsersMeGameCredentialsAsyncAction* RestDeleteUsersMeGameCredentials(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& IntegrationId);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|REST")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenHttpAsyncOutput Completed;
 
 	UPROPERTY(BlueprintAssignable)
 	FHaivenHttpAsyncOutput Failed;
@@ -6056,7 +6543,7 @@ class HAIVEN_API UHaivenRestDeleteUsersMeGameCredentialsCredentialIdAsyncAction 
 	GENERATED_BODY()
 
 public:
-	/** DELETE /users/me/game-credentials/{credential_id} -- Revoke a game credential */
+	/** DELETE /users/me/game-credentials/{credential_id} -- Revoke one game credential */
 	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|REST")
 	static UHaivenRestDeleteUsersMeGameCredentialsCredentialIdAsyncAction* RestDeleteUsersMeGameCredentialsCredentialId(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& CredentialId);
 

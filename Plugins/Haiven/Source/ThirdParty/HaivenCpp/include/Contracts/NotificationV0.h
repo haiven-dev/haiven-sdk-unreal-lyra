@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A user notification.
 	struct NotificationV0
 	{
 		/// The stable identifier of this value.

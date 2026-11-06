@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A chat channel visible to a gaming client.
 	struct ChatChannelV0
 	{
 		/// The chat community identifier.

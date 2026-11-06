@@ -42,6 +42,7 @@ namespace Haiven
 		std::string Subprotocol;
 	};
 
+	/// The negotiated contract and optional SDK identity for a WebSocket connection.
 	struct WsHandshakeV0
 	{
 		/// The server-generated WebSocket connection identifier.

@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A server frame the client did not ask for.
 	struct WsServerEventV0
 	{
 		/// The frame discriminator, naming what happened.

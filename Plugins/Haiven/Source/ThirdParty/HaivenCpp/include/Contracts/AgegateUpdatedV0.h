@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A change to the signed-in player's stored age-gate status, sent to their open sockets.
 	struct AgegateUpdatedV0
 	{
 		/// The stored age band: digital-minor, digital-youth or digital-adult. Absent when none is stored.

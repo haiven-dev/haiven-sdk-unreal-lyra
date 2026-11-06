@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A Google or Apple identity linked to the account from settings.
 	struct AccountIdentityLinkedV0
 	{
 		/// The sign-in provider of the identity: google or apple.

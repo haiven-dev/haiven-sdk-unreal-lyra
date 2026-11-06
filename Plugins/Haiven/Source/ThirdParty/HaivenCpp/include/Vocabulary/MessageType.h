@@ -59,6 +59,16 @@ class MessageType {
 	static const MessageType kAgegateUpdated;
 	static const MessageType kEntitlementsUpdated;
 	static const MessageType kMotd;
+	static const MessageType kSessionResume;
+	static const MessageType kSessionPeerConnected;
+	static const MessageType kSessionMemberJoined;
+	static const MessageType kSessionMemberLeft;
+	static const MessageType kSessionUpdated;
+	static const MessageType kSessionClosed;
+	static const MessageType kP2pSignal;
+	static const MessageType kP2pSignalReceived;
+	static const MessageType kP2pSignalAck;
+	static const MessageType kP2pIceServers;
 
 	const std::string& value() const noexcept { return value_; }
 
@@ -119,6 +129,16 @@ inline const MessageType MessageType::kAccountIdentityLinkFailed{"account.identi
 inline const MessageType MessageType::kAgegateUpdated{"agegate.updated"};
 inline const MessageType MessageType::kEntitlementsUpdated{"entitlements.updated"};
 inline const MessageType MessageType::kMotd{"motd"};
+inline const MessageType MessageType::kSessionResume{"session.resume"};
+inline const MessageType MessageType::kSessionPeerConnected{"session.peer.connected"};
+inline const MessageType MessageType::kSessionMemberJoined{"session.member.joined"};
+inline const MessageType MessageType::kSessionMemberLeft{"session.member.left"};
+inline const MessageType MessageType::kSessionUpdated{"session.updated"};
+inline const MessageType MessageType::kSessionClosed{"session.closed"};
+inline const MessageType MessageType::kP2pSignal{"p2p.signal"};
+inline const MessageType MessageType::kP2pSignalReceived{"p2p.signal.received"};
+inline const MessageType MessageType::kP2pSignalAck{"p2p.signal.ack"};
+inline const MessageType MessageType::kP2pIceServers{"p2p.ice.servers"};
 
 inline const std::unordered_set<std::string>& MessageType::registered() {
 	static const std::unordered_set<std::string> values = {
@@ -162,6 +182,16 @@ inline const std::unordered_set<std::string>& MessageType::registered() {
 		"agegate.updated",
 		"entitlements.updated",
 		"motd",
+		"session.resume",
+		"session.peer.connected",
+		"session.member.joined",
+		"session.member.left",
+		"session.updated",
+		"session.closed",
+		"p2p.signal",
+		"p2p.signal.received",
+		"p2p.signal.ack",
+		"p2p.ice.servers",
 	};
 	return values;
 }

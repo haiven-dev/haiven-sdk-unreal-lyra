@@ -262,6 +262,51 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
 	static FString NotificationV0ToJson(const FHaivenNotificationV0& Value);
 
+	/** Parses P2pIceServersReplyV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseP2pIceServersReplyV0(const FString& Json, FHaivenP2pIceServersReplyV0& Value, FString& Error);
+
+	/** Writes P2pIceServersReplyV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString P2pIceServersReplyV0ToJson(const FHaivenP2pIceServersReplyV0& Value);
+
+	/** Parses P2pSignalAckEventV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseP2pSignalAckEventV0(const FString& Json, FHaivenP2pSignalAckEventV0& Value, FString& Error);
+
+	/** Writes P2pSignalAckEventV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString P2pSignalAckEventV0ToJson(const FHaivenP2pSignalAckEventV0& Value);
+
+	/** Parses P2pSignalAckV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseP2pSignalAckV0(const FString& Json, FHaivenP2pSignalAckV0& Value, FString& Error);
+
+	/** Writes P2pSignalAckV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString P2pSignalAckV0ToJson(const FHaivenP2pSignalAckV0& Value);
+
+	/** Parses P2pSignalReceivedV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseP2pSignalReceivedV0(const FString& Json, FHaivenP2pSignalReceivedV0& Value, FString& Error);
+
+	/** Writes P2pSignalReceivedV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString P2pSignalReceivedV0ToJson(const FHaivenP2pSignalReceivedV0& Value);
+
+	/** Parses P2pSignalV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseP2pSignalV0(const FString& Json, FHaivenP2pSignalV0& Value, FString& Error);
+
+	/** Writes P2pSignalV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString P2pSignalV0ToJson(const FHaivenP2pSignalV0& Value);
+
 	/** Parses PresenceV0 JSON, such as a realtime reply's payload. False, with Error
 	 * naming the field, when the JSON does not match the contract. */
 	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
@@ -279,6 +324,69 @@ public:
 	/** Writes SafetyBundleManifestV1 as JSON, such as a request body or payload. */
 	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
 	static FString SafetyBundleManifestV1ToJson(const FHaivenSafetyBundleManifestV1& Value);
+
+	/** Parses SessionClosedV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseSessionClosedV0(const FString& Json, FHaivenSessionClosedV0& Value, FString& Error);
+
+	/** Writes SessionClosedV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString SessionClosedV0ToJson(const FHaivenSessionClosedV0& Value);
+
+	/** Parses SessionMemberJoinedV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseSessionMemberJoinedV0(const FString& Json, FHaivenSessionMemberJoinedV0& Value, FString& Error);
+
+	/** Writes SessionMemberJoinedV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString SessionMemberJoinedV0ToJson(const FHaivenSessionMemberJoinedV0& Value);
+
+	/** Parses SessionMemberLeftV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseSessionMemberLeftV0(const FString& Json, FHaivenSessionMemberLeftV0& Value, FString& Error);
+
+	/** Writes SessionMemberLeftV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString SessionMemberLeftV0ToJson(const FHaivenSessionMemberLeftV0& Value);
+
+	/** Parses SessionPeerConnectedV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseSessionPeerConnectedV0(const FString& Json, FHaivenSessionPeerConnectedV0& Value, FString& Error);
+
+	/** Writes SessionPeerConnectedV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString SessionPeerConnectedV0ToJson(const FHaivenSessionPeerConnectedV0& Value);
+
+	/** Parses SessionResumeReplyV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseSessionResumeReplyV0(const FString& Json, FHaivenSessionResumeReplyV0& Value, FString& Error);
+
+	/** Writes SessionResumeReplyV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString SessionResumeReplyV0ToJson(const FHaivenSessionResumeReplyV0& Value);
+
+	/** Parses SessionResumeRequestV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseSessionResumeRequestV0(const FString& Json, FHaivenSessionResumeRequestV0& Value, FString& Error);
+
+	/** Writes SessionResumeRequestV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString SessionResumeRequestV0ToJson(const FHaivenSessionResumeRequestV0& Value);
+
+	/** Parses SessionUpdatedV0 JSON, such as a realtime reply's payload. False, with Error
+	 * naming the field, when the JSON does not match the contract. */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Contracts")
+	static bool ParseSessionUpdatedV0(const FString& Json, FHaivenSessionUpdatedV0& Value, FString& Error);
+
+	/** Writes SessionUpdatedV0 as JSON, such as a request body or payload. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Contracts")
+	static FString SessionUpdatedV0ToJson(const FHaivenSessionUpdatedV0& Value);
 
 	/** Parses WsAuthExpiredDroppedV0 JSON, such as a realtime reply's payload. False, with Error
 	 * naming the field, when the JSON does not match the contract. */

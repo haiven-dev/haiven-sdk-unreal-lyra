@@ -45,6 +45,7 @@ namespace Haiven
 		FriendRelationshipV0PresenceStatus Status;
 	};
 
+	/// An accepted friendship as seen by one of its two users.
 	struct FriendRelationshipV0
 	{
 		/// The stable identifier of this value.
