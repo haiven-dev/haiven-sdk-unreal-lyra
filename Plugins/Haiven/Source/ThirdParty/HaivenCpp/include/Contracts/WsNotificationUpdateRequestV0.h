@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The payload a client sends on a notifications.update frame, revising one notification.
 	struct WsNotificationUpdateRequestV0
 	{
 		/// The notification to revise.

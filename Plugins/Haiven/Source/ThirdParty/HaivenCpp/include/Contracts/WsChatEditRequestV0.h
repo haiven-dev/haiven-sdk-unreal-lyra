@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The payload a client sends on a chat.edit frame, replacing the text of a message it authored.
 	struct WsChatEditRequestV0
 	{
 		/// The message to edit.

@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A request to replace a chat message's content.
 	struct ChatEditRequestV0
 	{
 		/// The chat message identifier.

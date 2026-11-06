@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A request to mark a notification category as read.
 	struct NotificationReadRequestV0
 	{
 		/// The notification category used for grouping and read state.

@@ -1002,6 +1002,111 @@ namespace Haiven::Blueprint
 		return Result;
 	}
 
+	FHaivenRestAnnouncement FromCpp(const Haiven::RestTypes::Announcement& Value)
+	{
+		FHaivenRestAnnouncement Result;
+		Result.bHasBody = Value.Body.has_value();
+		if (Value.Body)
+		{
+			Result.Body = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Body));
+		}
+		Result.bHasCategory = Value.Category.has_value();
+		if (Value.Category)
+		{
+			Result.Category = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Category));
+		}
+		Result.bHasCoverImageUrl = Value.CoverImageUrl.has_value();
+		if (Value.CoverImageUrl)
+		{
+			Result.CoverImageUrl = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.CoverImageUrl));
+		}
+		Result.bHasId = Value.Id.has_value();
+		if (Value.Id)
+		{
+			Result.Id = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Id));
+		}
+		Result.bHasPublishedAt = Value.PublishedAt.has_value();
+		if (Value.PublishedAt)
+		{
+			Result.PublishedAt = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.PublishedAt));
+		}
+		Result.bHasTitle = Value.Title.has_value();
+		if (Value.Title)
+		{
+			Result.Title = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Title));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::Announcement ToCpp(const FHaivenRestAnnouncement& Value)
+	{
+		Haiven::RestTypes::Announcement Result;
+		if (Value.bHasBody)
+		{
+			Result.Body = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Body);
+		}
+		if (Value.bHasCategory)
+		{
+			Result.Category = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Category);
+		}
+		if (Value.bHasCoverImageUrl)
+		{
+			Result.CoverImageUrl = HaivenBlueprintRestTypesDetail::ToUtf8(Value.CoverImageUrl);
+		}
+		if (Value.bHasId)
+		{
+			Result.Id = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Id);
+		}
+		if (Value.bHasPublishedAt)
+		{
+			Result.PublishedAt = HaivenBlueprintRestTypesDetail::ToUtf8(Value.PublishedAt);
+		}
+		if (Value.bHasTitle)
+		{
+			Result.Title = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Title);
+		}
+		return Result;
+	}
+
+	FHaivenRestAnnouncementPage FromCpp(const Haiven::RestTypes::AnnouncementPage& Value)
+	{
+		FHaivenRestAnnouncementPage Result;
+		Result.bHasItems = Value.Items.has_value();
+		if (Value.Items)
+		{
+			for (const auto& Item : (*Value.Items))
+			{
+				Result.Items.Add(FromCpp(Item));
+			}
+		}
+		Result.bHasTotal = Value.Total.has_value();
+		if (Value.Total)
+		{
+			Result.Total = (*Value.Total);
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::AnnouncementPage ToCpp(const FHaivenRestAnnouncementPage& Value)
+	{
+		Haiven::RestTypes::AnnouncementPage Result;
+		if (Value.bHasItems)
+		{
+			std::vector<Haiven::RestTypes::Announcement> ItemsItems;
+			ItemsItems.reserve(Value.Items.Num());
+			for (const auto& Item : Value.Items)
+			{
+				ItemsItems.push_back(ToCpp(Item));
+			}
+			Result.Items = std::move(ItemsItems);
+		}
+		if (Value.bHasTotal)
+		{
+			Result.Total = Value.Total;
+		}
+		return Result;
+	}
+
 	FHaivenRestApp FromCpp(const Haiven::RestTypes::App& Value)
 	{
 		FHaivenRestApp Result;
@@ -1039,6 +1144,11 @@ namespace Haiven::Blueprint
 		if (Value.OfficialCommunityId)
 		{
 			Result.OfficialCommunityId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.OfficialCommunityId));
+		}
+		Result.bHasPublicId = Value.PublicId.has_value();
+		if (Value.PublicId)
+		{
+			Result.PublicId = (*Value.PublicId);
 		}
 		Result.bHasPublishedAt = Value.PublishedAt.has_value();
 		if (Value.PublishedAt)
@@ -1111,6 +1221,10 @@ namespace Haiven::Blueprint
 		if (Value.bHasOfficialCommunityId)
 		{
 			Result.OfficialCommunityId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.OfficialCommunityId);
+		}
+		if (Value.bHasPublicId)
+		{
+			Result.PublicId = Value.PublicId;
 		}
 		if (Value.bHasPublishedAt)
 		{
@@ -2132,14 +2246,9 @@ namespace Haiven::Blueprint
 		return Result;
 	}
 
-	FHaivenRestBuildPlatform FromCpp(const Haiven::RestTypes::BuildPlatform& Value)
+	FHaivenRestBuildPlatformResponse FromCpp(const Haiven::RestTypes::BuildPlatformResponse& Value)
 	{
-		FHaivenRestBuildPlatform Result;
-		Result.bHasBuildId = Value.BuildId.has_value();
-		if (Value.BuildId)
-		{
-			Result.BuildId = (*Value.BuildId);
-		}
+		FHaivenRestBuildPlatformResponse Result;
 		Result.bHasCreatedAt = Value.CreatedAt.has_value();
 		if (Value.CreatedAt)
 		{
@@ -2155,11 +2264,6 @@ namespace Haiven::Blueprint
 		{
 			Result.IsDisabled = (*Value.IsDisabled);
 		}
-		Result.bHasObjStoreUrl = Value.ObjStoreUrl.has_value();
-		if (Value.ObjStoreUrl)
-		{
-			Result.ObjStoreUrl = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ObjStoreUrl));
-		}
 		Result.bHasPlatformCode = Value.PlatformCode.has_value();
 		if (Value.PlatformCode)
 		{
@@ -2173,13 +2277,9 @@ namespace Haiven::Blueprint
 		return Result;
 	}
 
-	Haiven::RestTypes::BuildPlatform ToCpp(const FHaivenRestBuildPlatform& Value)
+	Haiven::RestTypes::BuildPlatformResponse ToCpp(const FHaivenRestBuildPlatformResponse& Value)
 	{
-		Haiven::RestTypes::BuildPlatform Result;
-		if (Value.bHasBuildId)
-		{
-			Result.BuildId = Value.BuildId;
-		}
+		Haiven::RestTypes::BuildPlatformResponse Result;
 		if (Value.bHasCreatedAt)
 		{
 			Result.CreatedAt = HaivenBlueprintRestTypesDetail::ToUtf8(Value.CreatedAt);
@@ -2191,10 +2291,6 @@ namespace Haiven::Blueprint
 		if (Value.bHasIsDisabled)
 		{
 			Result.IsDisabled = Value.IsDisabled;
-		}
-		if (Value.bHasObjStoreUrl)
-		{
-			Result.ObjStoreUrl = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ObjStoreUrl);
 		}
 		if (Value.bHasPlatformCode)
 		{
@@ -2455,6 +2551,11 @@ namespace Haiven::Blueprint
 		{
 			Result.RewardRef = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.RewardRef));
 		}
+		Result.bHasStatus = Value.Status.has_value();
+		if (Value.Status)
+		{
+			Result.Status = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Status));
+		}
 		return Result;
 	}
 
@@ -2472,6 +2573,10 @@ namespace Haiven::Blueprint
 		if (Value.bHasRewardRef)
 		{
 			Result.RewardRef = HaivenBlueprintRestTypesDetail::ToUtf8(Value.RewardRef);
+		}
+		if (Value.bHasStatus)
+		{
+			Result.Status = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Status);
 		}
 		return Result;
 	}
@@ -4576,6 +4681,173 @@ namespace Haiven::Blueprint
 		return Result;
 	}
 
+	FHaivenRestCreateRequest FromCpp(const Haiven::RestTypes::CreateRequest& Value)
+	{
+		FHaivenRestCreateRequest Result;
+		Result.bHasAdmissionId = Value.AdmissionId.has_value();
+		if (Value.AdmissionId)
+		{
+			Result.AdmissionId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.AdmissionId));
+		}
+		Result.bHasAllowMixedAges = Value.AllowMixedAges.has_value();
+		if (Value.AllowMixedAges)
+		{
+			Result.AllowMixedAges = (*Value.AllowMixedAges);
+		}
+		Result.bHasConnectionId = Value.ConnectionId.has_value();
+		if (Value.ConnectionId)
+		{
+			Result.ConnectionId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ConnectionId));
+		}
+		Result.bHasJoinPayload = Value.JoinPayload.has_value();
+		if (Value.JoinPayload)
+		{
+			Result.JoinPayload = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.JoinPayload));
+		}
+		Result.bHasMaxMembers = Value.MaxMembers.has_value();
+		if (Value.MaxMembers)
+		{
+			Result.MaxMembers = (*Value.MaxMembers);
+		}
+		Result.bHasMetadata = Value.Metadata.has_value();
+		if (Value.Metadata)
+		{
+			for (const auto& Entry : (*Value.Metadata))
+			{
+				Result.Metadata.Add(HaivenBlueprintRestTypesDetail::FromUtf8(Entry.first), HaivenBlueprintRestTypesDetail::FromUtf8(Entry.second));
+			}
+		}
+		Result.bHasRequireRelay = Value.RequireRelay.has_value();
+		if (Value.RequireRelay)
+		{
+			Result.RequireRelay = (*Value.RequireRelay);
+		}
+		Result.bHasResumeToken = Value.ResumeToken.has_value();
+		if (Value.ResumeToken)
+		{
+			Result.ResumeToken = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ResumeToken));
+		}
+		Result.bHasVisibility = Value.Visibility.has_value();
+		if (Value.Visibility)
+		{
+			Result.Visibility = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Visibility));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::CreateRequest ToCpp(const FHaivenRestCreateRequest& Value)
+	{
+		Haiven::RestTypes::CreateRequest Result;
+		if (Value.bHasAdmissionId)
+		{
+			Result.AdmissionId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.AdmissionId);
+		}
+		if (Value.bHasAllowMixedAges)
+		{
+			Result.AllowMixedAges = Value.AllowMixedAges;
+		}
+		if (Value.bHasConnectionId)
+		{
+			Result.ConnectionId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ConnectionId);
+		}
+		if (Value.bHasJoinPayload)
+		{
+			Result.JoinPayload = HaivenBlueprintRestTypesDetail::ToUtf8(Value.JoinPayload);
+		}
+		if (Value.bHasMaxMembers)
+		{
+			Result.MaxMembers = Value.MaxMembers;
+		}
+		if (Value.bHasMetadata)
+		{
+			std::map<std::string, std::string> MetadataEntries;
+			for (const auto& Entry : Value.Metadata)
+			{
+				MetadataEntries.emplace(HaivenBlueprintRestTypesDetail::ToUtf8(Entry.Key), HaivenBlueprintRestTypesDetail::ToUtf8(Entry.Value));
+			}
+			Result.Metadata = std::move(MetadataEntries);
+		}
+		if (Value.bHasRequireRelay)
+		{
+			Result.RequireRelay = Value.RequireRelay;
+		}
+		if (Value.bHasResumeToken)
+		{
+			Result.ResumeToken = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ResumeToken);
+		}
+		if (Value.bHasVisibility)
+		{
+			Result.Visibility = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Visibility);
+		}
+		return Result;
+	}
+
+	FHaivenRestCreateResponse FromCpp(const Haiven::RestTypes::CreateResponse& Value)
+	{
+		FHaivenRestCreateResponse Result;
+		Result.bHasChatChannelId = Value.ChatChannelId.has_value();
+		if (Value.ChatChannelId)
+		{
+			Result.ChatChannelId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ChatChannelId));
+		}
+		Result.bHasJoinCode = Value.JoinCode.has_value();
+		if (Value.JoinCode)
+		{
+			Result.JoinCode = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.JoinCode));
+		}
+		Result.bHasParticipationId = Value.ParticipationId.has_value();
+		if (Value.ParticipationId)
+		{
+			Result.ParticipationId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ParticipationId));
+		}
+		Result.bHasRelayPolicy = Value.RelayPolicy.has_value();
+		if (Value.RelayPolicy)
+		{
+			Result.RelayPolicy = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.RelayPolicy));
+		}
+		Result.bHasSessionId = Value.SessionId.has_value();
+		if (Value.SessionId)
+		{
+			Result.SessionId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.SessionId));
+		}
+		Result.bHasState = Value.State.has_value();
+		if (Value.State)
+		{
+			Result.State = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.State));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::CreateResponse ToCpp(const FHaivenRestCreateResponse& Value)
+	{
+		Haiven::RestTypes::CreateResponse Result;
+		if (Value.bHasChatChannelId)
+		{
+			Result.ChatChannelId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ChatChannelId);
+		}
+		if (Value.bHasJoinCode)
+		{
+			Result.JoinCode = HaivenBlueprintRestTypesDetail::ToUtf8(Value.JoinCode);
+		}
+		if (Value.bHasParticipationId)
+		{
+			Result.ParticipationId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ParticipationId);
+		}
+		if (Value.bHasRelayPolicy)
+		{
+			Result.RelayPolicy = HaivenBlueprintRestTypesDetail::ToUtf8(Value.RelayPolicy);
+		}
+		if (Value.bHasSessionId)
+		{
+			Result.SessionId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.SessionId);
+		}
+		if (Value.bHasState)
+		{
+			Result.State = HaivenBlueprintRestTypesDetail::ToUtf8(Value.State);
+		}
+		return Result;
+	}
+
 	FHaivenRestCreateRewardRequest FromCpp(const Haiven::RestTypes::CreateRewardRequest& Value)
 	{
 		FHaivenRestCreateRewardRequest Result;
@@ -6535,18 +6807,85 @@ namespace Haiven::Blueprint
 		return Result;
 	}
 
-	FHaivenRestGameCredentialRecord FromCpp(const Haiven::RestTypes::GameCredentialRecord& Value)
+	FHaivenRestGameAccessResponse FromCpp(const Haiven::RestTypes::GameAccessResponse& Value)
 	{
-		FHaivenRestGameCredentialRecord Result;
+		FHaivenRestGameAccessResponse Result;
+		Result.bHasAccess = Value.Access.has_value();
+		if (Value.Access)
+		{
+			Result.Access = (*Value.Access);
+		}
+		Result.bHasBasis = Value.Basis.has_value();
+		if (Value.Basis)
+		{
+			Result.Basis = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Basis));
+		}
+		Result.bHasPermanent = Value.Permanent.has_value();
+		if (Value.Permanent)
+		{
+			Result.Permanent = (*Value.Permanent);
+		}
+		Result.bHasRefundHold = Value.RefundHold.has_value();
+		if (Value.RefundHold)
+		{
+			Result.RefundHold = (*Value.RefundHold);
+		}
+		Result.bHasValidTo = Value.ValidTo.has_value();
+		if (Value.ValidTo)
+		{
+			Result.ValidTo = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ValidTo));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::GameAccessResponse ToCpp(const FHaivenRestGameAccessResponse& Value)
+	{
+		Haiven::RestTypes::GameAccessResponse Result;
+		if (Value.bHasAccess)
+		{
+			Result.Access = Value.Access;
+		}
+		if (Value.bHasBasis)
+		{
+			Result.Basis = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Basis);
+		}
+		if (Value.bHasPermanent)
+		{
+			Result.Permanent = Value.Permanent;
+		}
+		if (Value.bHasRefundHold)
+		{
+			Result.RefundHold = Value.RefundHold;
+		}
+		if (Value.bHasValidTo)
+		{
+			Result.ValidTo = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ValidTo);
+		}
+		return Result;
+	}
+
+	FHaivenRestGameCredentialResponse FromCpp(const Haiven::RestTypes::GameCredentialResponse& Value)
+	{
+		FHaivenRestGameCredentialResponse Result;
+		Result.bHasCredentialId = Value.CredentialId.has_value();
+		if (Value.CredentialId)
+		{
+			Result.CredentialId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.CredentialId));
+		}
 		Result.bHasExpiresAt = Value.ExpiresAt.has_value();
 		if (Value.ExpiresAt)
 		{
 			Result.ExpiresAt = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ExpiresAt));
 		}
-		Result.bHasId = Value.Id.has_value();
-		if (Value.Id)
+		Result.bHasGameId = Value.GameId.has_value();
+		if (Value.GameId)
 		{
-			Result.Id = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Id));
+			Result.GameId = (*Value.GameId);
+		}
+		Result.bHasGameTitle = Value.GameTitle.has_value();
+		if (Value.GameTitle)
+		{
+			Result.GameTitle = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.GameTitle));
 		}
 		Result.bHasIntegrationId = Value.IntegrationId.has_value();
 		if (Value.IntegrationId)
@@ -6566,16 +6905,24 @@ namespace Haiven::Blueprint
 		return Result;
 	}
 
-	Haiven::RestTypes::GameCredentialRecord ToCpp(const FHaivenRestGameCredentialRecord& Value)
+	Haiven::RestTypes::GameCredentialResponse ToCpp(const FHaivenRestGameCredentialResponse& Value)
 	{
-		Haiven::RestTypes::GameCredentialRecord Result;
+		Haiven::RestTypes::GameCredentialResponse Result;
+		if (Value.bHasCredentialId)
+		{
+			Result.CredentialId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.CredentialId);
+		}
 		if (Value.bHasExpiresAt)
 		{
 			Result.ExpiresAt = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ExpiresAt);
 		}
-		if (Value.bHasId)
+		if (Value.bHasGameId)
 		{
-			Result.Id = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Id);
+			Result.GameId = Value.GameId;
+		}
+		if (Value.bHasGameTitle)
+		{
+			Result.GameTitle = HaivenBlueprintRestTypesDetail::ToUtf8(Value.GameTitle);
 		}
 		if (Value.bHasIntegrationId)
 		{
@@ -6588,6 +6935,36 @@ namespace Haiven::Blueprint
 		if (Value.bHasRevokedAt)
 		{
 			Result.RevokedAt = HaivenBlueprintRestTypesDetail::ToUtf8(Value.RevokedAt);
+		}
+		return Result;
+	}
+
+	FHaivenRestGameCredentialsResponse FromCpp(const Haiven::RestTypes::GameCredentialsResponse& Value)
+	{
+		FHaivenRestGameCredentialsResponse Result;
+		Result.bHasItems = Value.Items.has_value();
+		if (Value.Items)
+		{
+			for (const auto& Item : (*Value.Items))
+			{
+				Result.Items.Add(FromCpp(Item));
+			}
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::GameCredentialsResponse ToCpp(const FHaivenRestGameCredentialsResponse& Value)
+	{
+		Haiven::RestTypes::GameCredentialsResponse Result;
+		if (Value.bHasItems)
+		{
+			std::vector<Haiven::RestTypes::GameCredentialResponse> ItemsItems;
+			ItemsItems.reserve(Value.Items.Num());
+			for (const auto& Item : Value.Items)
+			{
+				ItemsItems.push_back(ToCpp(Item));
+			}
+			Result.Items = std::move(ItemsItems);
 		}
 		return Result;
 	}
@@ -6650,7 +7027,7 @@ namespace Haiven::Blueprint
 		}
 		if (Value.bHasPlatforms)
 		{
-			std::vector<Haiven::RestTypes::BuildPlatform> PlatformsItems;
+			std::vector<Haiven::RestTypes::BuildPlatformResponse> PlatformsItems;
 			PlatformsItems.reserve(Value.Platforms.Num());
 			for (const auto& Item : Value.Platforms)
 			{
@@ -7219,6 +7596,14 @@ namespace Haiven::Blueprint
 		{
 			Result.LoginConfigured = (*Value.LoginConfigured);
 		}
+		Result.bHasRedirectUris = Value.RedirectUris.has_value();
+		if (Value.RedirectUris)
+		{
+			for (const auto& Item : (*Value.RedirectUris))
+			{
+				Result.RedirectUris.Add(HaivenBlueprintRestTypesDetail::FromUtf8(Item));
+			}
+		}
 		return Result;
 	}
 
@@ -7248,6 +7633,16 @@ namespace Haiven::Blueprint
 		if (Value.bHasLoginConfigured)
 		{
 			Result.LoginConfigured = Value.LoginConfigured;
+		}
+		if (Value.bHasRedirectUris)
+		{
+			std::vector<std::string> RedirectUrisItems;
+			RedirectUrisItems.reserve(Value.RedirectUris.Num());
+			for (const auto& Item : Value.RedirectUris)
+			{
+				RedirectUrisItems.push_back(HaivenBlueprintRestTypesDetail::ToUtf8(Item));
+			}
+			Result.RedirectUris = std::move(RedirectUrisItems);
 		}
 		return Result;
 	}
@@ -7485,6 +7880,27 @@ namespace Haiven::Blueprint
 		if (Value.bHasPlay)
 		{
 			Result.Play = Value.Play;
+		}
+		return Result;
+	}
+
+	FHaivenRestInviteRequest FromCpp(const Haiven::RestTypes::InviteRequest& Value)
+	{
+		FHaivenRestInviteRequest Result;
+		Result.bHasUserId = Value.UserId.has_value();
+		if (Value.UserId)
+		{
+			Result.UserId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.UserId));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::InviteRequest ToCpp(const FHaivenRestInviteRequest& Value)
+	{
+		Haiven::RestTypes::InviteRequest Result;
+		if (Value.bHasUserId)
+		{
+			Result.UserId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.UserId);
 		}
 		return Result;
 	}
@@ -7780,6 +8196,129 @@ namespace Haiven::Blueprint
 		return Result;
 	}
 
+	FHaivenRestJoinRequest FromCpp(const Haiven::RestTypes::JoinRequest& Value)
+	{
+		FHaivenRestJoinRequest Result;
+		Result.bHasAdmissionId = Value.AdmissionId.has_value();
+		if (Value.AdmissionId)
+		{
+			Result.AdmissionId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.AdmissionId));
+		}
+		Result.bHasConnectionId = Value.ConnectionId.has_value();
+		if (Value.ConnectionId)
+		{
+			Result.ConnectionId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ConnectionId));
+		}
+		Result.bHasJoinCode = Value.JoinCode.has_value();
+		if (Value.JoinCode)
+		{
+			Result.JoinCode = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.JoinCode));
+		}
+		Result.bHasResumeToken = Value.ResumeToken.has_value();
+		if (Value.ResumeToken)
+		{
+			Result.ResumeToken = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ResumeToken));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::JoinRequest ToCpp(const FHaivenRestJoinRequest& Value)
+	{
+		Haiven::RestTypes::JoinRequest Result;
+		if (Value.bHasAdmissionId)
+		{
+			Result.AdmissionId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.AdmissionId);
+		}
+		if (Value.bHasConnectionId)
+		{
+			Result.ConnectionId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ConnectionId);
+		}
+		if (Value.bHasJoinCode)
+		{
+			Result.JoinCode = HaivenBlueprintRestTypesDetail::ToUtf8(Value.JoinCode);
+		}
+		if (Value.bHasResumeToken)
+		{
+			Result.ResumeToken = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ResumeToken);
+		}
+		return Result;
+	}
+
+	FHaivenRestJoinResponse FromCpp(const Haiven::RestTypes::JoinResponse& Value)
+	{
+		FHaivenRestJoinResponse Result;
+		Result.bHasChatChannelId = Value.ChatChannelId.has_value();
+		if (Value.ChatChannelId)
+		{
+			Result.ChatChannelId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ChatChannelId));
+		}
+		Result.bHasHostUserId = Value.HostUserId.has_value();
+		if (Value.HostUserId)
+		{
+			Result.HostUserId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.HostUserId));
+		}
+		Result.bHasJoinPayload = Value.JoinPayload.has_value();
+		if (Value.JoinPayload)
+		{
+			Result.JoinPayload = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.JoinPayload));
+		}
+		Result.bHasParticipationId = Value.ParticipationId.has_value();
+		if (Value.ParticipationId)
+		{
+			Result.ParticipationId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ParticipationId));
+		}
+		Result.bHasRelayPolicy = Value.RelayPolicy.has_value();
+		if (Value.RelayPolicy)
+		{
+			Result.RelayPolicy = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.RelayPolicy));
+		}
+		Result.bHasSessionId = Value.SessionId.has_value();
+		if (Value.SessionId)
+		{
+			Result.SessionId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.SessionId));
+		}
+		Result.bHasState = Value.State.has_value();
+		if (Value.State)
+		{
+			Result.State = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.State));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::JoinResponse ToCpp(const FHaivenRestJoinResponse& Value)
+	{
+		Haiven::RestTypes::JoinResponse Result;
+		if (Value.bHasChatChannelId)
+		{
+			Result.ChatChannelId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ChatChannelId);
+		}
+		if (Value.bHasHostUserId)
+		{
+			Result.HostUserId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.HostUserId);
+		}
+		if (Value.bHasJoinPayload)
+		{
+			Result.JoinPayload = HaivenBlueprintRestTypesDetail::ToUtf8(Value.JoinPayload);
+		}
+		if (Value.bHasParticipationId)
+		{
+			Result.ParticipationId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ParticipationId);
+		}
+		if (Value.bHasRelayPolicy)
+		{
+			Result.RelayPolicy = HaivenBlueprintRestTypesDetail::ToUtf8(Value.RelayPolicy);
+		}
+		if (Value.bHasSessionId)
+		{
+			Result.SessionId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.SessionId);
+		}
+		if (Value.bHasState)
+		{
+			Result.State = HaivenBlueprintRestTypesDetail::ToUtf8(Value.State);
+		}
+		return Result;
+	}
+
 	FHaivenRestJurisdictionAppealRequest FromCpp(const Haiven::RestTypes::JurisdictionAppealRequest& Value)
 	{
 		FHaivenRestJurisdictionAppealRequest Result;
@@ -7842,6 +8381,11 @@ namespace Haiven::Blueprint
 		if (Value.Name)
 		{
 			Result.Name = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Name));
+		}
+		Result.bHasPublicId = Value.PublicId.has_value();
+		if (Value.PublicId)
+		{
+			Result.PublicId = (*Value.PublicId);
 		}
 		Result.bHasPublishedAt = Value.PublishedAt.has_value();
 		if (Value.PublishedAt)
@@ -7915,6 +8459,10 @@ namespace Haiven::Blueprint
 		if (Value.bHasName)
 		{
 			Result.Name = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Name);
+		}
+		if (Value.bHasPublicId)
+		{
+			Result.PublicId = Value.PublicId;
 		}
 		if (Value.bHasPublishedAt)
 		{
@@ -8304,6 +8852,98 @@ namespace Haiven::Blueprint
 		if (Value.bHasUsername)
 		{
 			Result.Username = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Username);
+		}
+		return Result;
+	}
+
+	FHaivenRestListedSession FromCpp(const Haiven::RestTypes::ListedSession& Value)
+	{
+		FHaivenRestListedSession Result;
+		Result.bHasHostUserId = Value.HostUserId.has_value();
+		if (Value.HostUserId)
+		{
+			Result.HostUserId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.HostUserId));
+		}
+		Result.bHasMaxMembers = Value.MaxMembers.has_value();
+		if (Value.MaxMembers)
+		{
+			Result.MaxMembers = (*Value.MaxMembers);
+		}
+		Result.bHasMemberCount = Value.MemberCount.has_value();
+		if (Value.MemberCount)
+		{
+			Result.MemberCount = (*Value.MemberCount);
+		}
+		Result.bHasMetadata = Value.Metadata.has_value();
+		if (Value.Metadata)
+		{
+			for (const auto& Entry : (*Value.Metadata))
+			{
+				Result.Metadata.Add(HaivenBlueprintRestTypesDetail::FromUtf8(Entry.first), HaivenBlueprintRestTypesDetail::FromUtf8(Entry.second));
+			}
+		}
+		Result.bHasRelayPolicy = Value.RelayPolicy.has_value();
+		if (Value.RelayPolicy)
+		{
+			Result.RelayPolicy = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.RelayPolicy));
+		}
+		Result.bHasSessionId = Value.SessionId.has_value();
+		if (Value.SessionId)
+		{
+			Result.SessionId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.SessionId));
+		}
+		Result.bHasState = Value.State.has_value();
+		if (Value.State)
+		{
+			Result.State = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.State));
+		}
+		Result.bHasVisibility = Value.Visibility.has_value();
+		if (Value.Visibility)
+		{
+			Result.Visibility = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Visibility));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::ListedSession ToCpp(const FHaivenRestListedSession& Value)
+	{
+		Haiven::RestTypes::ListedSession Result;
+		if (Value.bHasHostUserId)
+		{
+			Result.HostUserId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.HostUserId);
+		}
+		if (Value.bHasMaxMembers)
+		{
+			Result.MaxMembers = Value.MaxMembers;
+		}
+		if (Value.bHasMemberCount)
+		{
+			Result.MemberCount = Value.MemberCount;
+		}
+		if (Value.bHasMetadata)
+		{
+			std::map<std::string, std::string> MetadataEntries;
+			for (const auto& Entry : Value.Metadata)
+			{
+				MetadataEntries.emplace(HaivenBlueprintRestTypesDetail::ToUtf8(Entry.Key), HaivenBlueprintRestTypesDetail::ToUtf8(Entry.Value));
+			}
+			Result.Metadata = std::move(MetadataEntries);
+		}
+		if (Value.bHasRelayPolicy)
+		{
+			Result.RelayPolicy = HaivenBlueprintRestTypesDetail::ToUtf8(Value.RelayPolicy);
+		}
+		if (Value.bHasSessionId)
+		{
+			Result.SessionId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.SessionId);
+		}
+		if (Value.bHasState)
+		{
+			Result.State = HaivenBlueprintRestTypesDetail::ToUtf8(Value.State);
+		}
+		if (Value.bHasVisibility)
+		{
+			Result.Visibility = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Visibility);
 		}
 		return Result;
 	}
@@ -9117,6 +9757,45 @@ namespace Haiven::Blueprint
 		if (Value.bHasUpdatedAt)
 		{
 			Result.UpdatedAt = HaivenBlueprintRestTypesDetail::ToUtf8(Value.UpdatedAt);
+		}
+		return Result;
+	}
+
+	FHaivenRestPlayerStatus FromCpp(const Haiven::RestTypes::PlayerStatus& Value)
+	{
+		FHaivenRestPlayerStatus Result;
+		Result.bHasCode = Value.Code.has_value();
+		if (Value.Code)
+		{
+			Result.Code = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Code));
+		}
+		Result.bHasSince = Value.Since.has_value();
+		if (Value.Since)
+		{
+			Result.Since = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Since));
+		}
+		Result.bHasTier = Value.Tier.has_value();
+		if (Value.Tier)
+		{
+			Result.Tier = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Tier));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::PlayerStatus ToCpp(const FHaivenRestPlayerStatus& Value)
+	{
+		Haiven::RestTypes::PlayerStatus Result;
+		if (Value.bHasCode)
+		{
+			Result.Code = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Code);
+		}
+		if (Value.bHasSince)
+		{
+			Result.Since = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Since);
+		}
+		if (Value.bHasTier)
+		{
+			Result.Tier = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Tier);
 		}
 		return Result;
 	}
@@ -10277,6 +10956,11 @@ namespace Haiven::Blueprint
 		{
 			Result.RewardRef = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.RewardRef));
 		}
+		Result.bHasStatus = Value.Status.has_value();
+		if (Value.Status)
+		{
+			Result.Status = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Status));
+		}
 		return Result;
 	}
 
@@ -10307,6 +10991,10 @@ namespace Haiven::Blueprint
 		{
 			Result.RewardRef = HaivenBlueprintRestTypesDetail::ToUtf8(Value.RewardRef);
 		}
+		if (Value.bHasStatus)
+		{
+			Result.Status = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Status);
+		}
 		return Result;
 	}
 
@@ -10332,6 +11020,14 @@ namespace Haiven::Blueprint
 		if (Value.ProjectionVersion)
 		{
 			Result.ProjectionVersion = (*Value.ProjectionVersion);
+		}
+		Result.bHasStatuses = Value.Statuses.has_value();
+		if (Value.Statuses)
+		{
+			for (const auto& Item : (*Value.Statuses))
+			{
+				Result.Statuses.Add(FromCpp(Item));
+			}
 		}
 		Result.bHasSubscriptionValidTo = Value.SubscriptionValidTo.has_value();
 		if (Value.SubscriptionValidTo)
@@ -10359,6 +11055,16 @@ namespace Haiven::Blueprint
 		if (Value.bHasProjectionVersion)
 		{
 			Result.ProjectionVersion = Value.ProjectionVersion;
+		}
+		if (Value.bHasStatuses)
+		{
+			std::vector<Haiven::RestTypes::PlayerStatus> StatusesItems;
+			StatusesItems.reserve(Value.Statuses.Num());
+			for (const auto& Item : Value.Statuses)
+			{
+				StatusesItems.push_back(ToCpp(Item));
+			}
+			Result.Statuses = std::move(StatusesItems);
 		}
 		if (Value.bHasSubscriptionValidTo)
 		{
@@ -10601,6 +11307,182 @@ namespace Haiven::Blueprint
 		return Result;
 	}
 
+	FHaivenRestRosterMember FromCpp(const Haiven::RestTypes::RosterMember& Value)
+	{
+		FHaivenRestRosterMember Result;
+		Result.bHasIsHost = Value.IsHost.has_value();
+		if (Value.IsHost)
+		{
+			Result.IsHost = (*Value.IsHost);
+		}
+		Result.bHasParticipationId = Value.ParticipationId.has_value();
+		if (Value.ParticipationId)
+		{
+			Result.ParticipationId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ParticipationId));
+		}
+		Result.bHasState = Value.State.has_value();
+		if (Value.State)
+		{
+			Result.State = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.State));
+		}
+		Result.bHasUserId = Value.UserId.has_value();
+		if (Value.UserId)
+		{
+			Result.UserId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.UserId));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::RosterMember ToCpp(const FHaivenRestRosterMember& Value)
+	{
+		Haiven::RestTypes::RosterMember Result;
+		if (Value.bHasIsHost)
+		{
+			Result.IsHost = Value.IsHost;
+		}
+		if (Value.bHasParticipationId)
+		{
+			Result.ParticipationId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ParticipationId);
+		}
+		if (Value.bHasState)
+		{
+			Result.State = HaivenBlueprintRestTypesDetail::ToUtf8(Value.State);
+		}
+		if (Value.bHasUserId)
+		{
+			Result.UserId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.UserId);
+		}
+		return Result;
+	}
+
+	FHaivenRestRoster FromCpp(const Haiven::RestTypes::Roster& Value)
+	{
+		FHaivenRestRoster Result;
+		Result.bHasChatChannelId = Value.ChatChannelId.has_value();
+		if (Value.ChatChannelId)
+		{
+			Result.ChatChannelId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.ChatChannelId));
+		}
+		Result.bHasHostUserId = Value.HostUserId.has_value();
+		if (Value.HostUserId)
+		{
+			Result.HostUserId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.HostUserId));
+		}
+		Result.bHasJoinCode = Value.JoinCode.has_value();
+		if (Value.JoinCode)
+		{
+			Result.JoinCode = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.JoinCode));
+		}
+		Result.bHasJoinPayload = Value.JoinPayload.has_value();
+		if (Value.JoinPayload)
+		{
+			Result.JoinPayload = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.JoinPayload));
+		}
+		Result.bHasMaxMembers = Value.MaxMembers.has_value();
+		if (Value.MaxMembers)
+		{
+			Result.MaxMembers = (*Value.MaxMembers);
+		}
+		Result.bHasMembers = Value.Members.has_value();
+		if (Value.Members)
+		{
+			for (const auto& Item : (*Value.Members))
+			{
+				Result.Members.Add(FromCpp(Item));
+			}
+		}
+		Result.bHasMetadata = Value.Metadata.has_value();
+		if (Value.Metadata)
+		{
+			for (const auto& Entry : (*Value.Metadata))
+			{
+				Result.Metadata.Add(HaivenBlueprintRestTypesDetail::FromUtf8(Entry.first), HaivenBlueprintRestTypesDetail::FromUtf8(Entry.second));
+			}
+		}
+		Result.bHasRelayPolicy = Value.RelayPolicy.has_value();
+		if (Value.RelayPolicy)
+		{
+			Result.RelayPolicy = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.RelayPolicy));
+		}
+		Result.bHasSessionId = Value.SessionId.has_value();
+		if (Value.SessionId)
+		{
+			Result.SessionId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.SessionId));
+		}
+		Result.bHasState = Value.State.has_value();
+		if (Value.State)
+		{
+			Result.State = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.State));
+		}
+		Result.bHasVisibility = Value.Visibility.has_value();
+		if (Value.Visibility)
+		{
+			Result.Visibility = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Visibility));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::Roster ToCpp(const FHaivenRestRoster& Value)
+	{
+		Haiven::RestTypes::Roster Result;
+		if (Value.bHasChatChannelId)
+		{
+			Result.ChatChannelId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.ChatChannelId);
+		}
+		if (Value.bHasHostUserId)
+		{
+			Result.HostUserId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.HostUserId);
+		}
+		if (Value.bHasJoinCode)
+		{
+			Result.JoinCode = HaivenBlueprintRestTypesDetail::ToUtf8(Value.JoinCode);
+		}
+		if (Value.bHasJoinPayload)
+		{
+			Result.JoinPayload = HaivenBlueprintRestTypesDetail::ToUtf8(Value.JoinPayload);
+		}
+		if (Value.bHasMaxMembers)
+		{
+			Result.MaxMembers = Value.MaxMembers;
+		}
+		if (Value.bHasMembers)
+		{
+			std::vector<Haiven::RestTypes::RosterMember> MembersItems;
+			MembersItems.reserve(Value.Members.Num());
+			for (const auto& Item : Value.Members)
+			{
+				MembersItems.push_back(ToCpp(Item));
+			}
+			Result.Members = std::move(MembersItems);
+		}
+		if (Value.bHasMetadata)
+		{
+			std::map<std::string, std::string> MetadataEntries;
+			for (const auto& Entry : Value.Metadata)
+			{
+				MetadataEntries.emplace(HaivenBlueprintRestTypesDetail::ToUtf8(Entry.Key), HaivenBlueprintRestTypesDetail::ToUtf8(Entry.Value));
+			}
+			Result.Metadata = std::move(MetadataEntries);
+		}
+		if (Value.bHasRelayPolicy)
+		{
+			Result.RelayPolicy = HaivenBlueprintRestTypesDetail::ToUtf8(Value.RelayPolicy);
+		}
+		if (Value.bHasSessionId)
+		{
+			Result.SessionId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.SessionId);
+		}
+		if (Value.bHasState)
+		{
+			Result.State = HaivenBlueprintRestTypesDetail::ToUtf8(Value.State);
+		}
+		if (Value.bHasVisibility)
+		{
+			Result.Visibility = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Visibility);
+		}
+		return Result;
+	}
+
 	FHaivenRestScanning FromCpp(const Haiven::RestTypes::Scanning& Value)
 	{
 		FHaivenRestScanning Result;
@@ -10761,6 +11643,11 @@ namespace Haiven::Blueprint
 		{
 			Result.RewardRef = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.RewardRef));
 		}
+		Result.bHasStatus = Value.Status.has_value();
+		if (Value.Status)
+		{
+			Result.Status = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Status));
+		}
 		Result.bHasUserId = Value.UserId.has_value();
 		if (Value.UserId)
 		{
@@ -10779,6 +11666,10 @@ namespace Haiven::Blueprint
 		if (Value.bHasRewardRef)
 		{
 			Result.RewardRef = HaivenBlueprintRestTypesDetail::ToUtf8(Value.RewardRef);
+		}
+		if (Value.bHasStatus)
+		{
+			Result.Status = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Status);
 		}
 		if (Value.bHasUserId)
 		{
@@ -10910,6 +11801,66 @@ namespace Haiven::Blueprint
 		return Result;
 	}
 
+	FHaivenRestSessionList FromCpp(const Haiven::RestTypes::SessionList& Value)
+	{
+		FHaivenRestSessionList Result;
+		Result.bHasCursor = Value.Cursor.has_value();
+		if (Value.Cursor)
+		{
+			Result.Cursor = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Cursor));
+		}
+		Result.bHasItems = Value.Items.has_value();
+		if (Value.Items)
+		{
+			for (const auto& Item : (*Value.Items))
+			{
+				Result.Items.Add(FromCpp(Item));
+			}
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::SessionList ToCpp(const FHaivenRestSessionList& Value)
+	{
+		Haiven::RestTypes::SessionList Result;
+		if (Value.bHasCursor)
+		{
+			Result.Cursor = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Cursor);
+		}
+		if (Value.bHasItems)
+		{
+			std::vector<Haiven::RestTypes::ListedSession> ItemsItems;
+			ItemsItems.reserve(Value.Items.Num());
+			for (const auto& Item : Value.Items)
+			{
+				ItemsItems.push_back(ToCpp(Item));
+			}
+			Result.Items = std::move(ItemsItems);
+		}
+		return Result;
+	}
+
+	FHaivenRestSetAppOfficialCommunityRequest FromCpp(const Haiven::RestTypes::SetAppOfficialCommunityRequest& Value)
+	{
+		FHaivenRestSetAppOfficialCommunityRequest Result;
+		Result.bHasCommunityId = Value.CommunityId.has_value();
+		if (Value.CommunityId)
+		{
+			Result.CommunityId = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.CommunityId));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::SetAppOfficialCommunityRequest ToCpp(const FHaivenRestSetAppOfficialCommunityRequest& Value)
+	{
+		Haiven::RestTypes::SetAppOfficialCommunityRequest Result;
+		if (Value.bHasCommunityId)
+		{
+			Result.CommunityId = HaivenBlueprintRestTypesDetail::ToUtf8(Value.CommunityId);
+		}
+		return Result;
+	}
+
 	FHaivenRestSetAppReviewKeyRequest FromCpp(const Haiven::RestTypes::SetAppReviewKeyRequest& Value)
 	{
 		FHaivenRestSetAppReviewKeyRequest Result;
@@ -10936,6 +11887,36 @@ namespace Haiven::Blueprint
 		if (Value.bHasRedemptionUrl)
 		{
 			Result.RedemptionUrl = HaivenBlueprintRestTypesDetail::ToUtf8(Value.RedemptionUrl);
+		}
+		return Result;
+	}
+
+	FHaivenRestSetRedirectURIsRequest FromCpp(const Haiven::RestTypes::SetRedirectURIsRequest& Value)
+	{
+		FHaivenRestSetRedirectURIsRequest Result;
+		Result.bHasRedirectUris = Value.RedirectUris.has_value();
+		if (Value.RedirectUris)
+		{
+			for (const auto& Item : (*Value.RedirectUris))
+			{
+				Result.RedirectUris.Add(HaivenBlueprintRestTypesDetail::FromUtf8(Item));
+			}
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::SetRedirectURIsRequest ToCpp(const FHaivenRestSetRedirectURIsRequest& Value)
+	{
+		Haiven::RestTypes::SetRedirectURIsRequest Result;
+		if (Value.bHasRedirectUris)
+		{
+			std::vector<std::string> RedirectUrisItems;
+			RedirectUrisItems.reserve(Value.RedirectUris.Num());
+			for (const auto& Item : Value.RedirectUris)
+			{
+				RedirectUrisItems.push_back(HaivenBlueprintRestTypesDetail::ToUtf8(Item));
+			}
+			Result.RedirectUris = std::move(RedirectUrisItems);
 		}
 		return Result;
 	}
@@ -11493,6 +12474,11 @@ namespace Haiven::Blueprint
 				Result.Tags.Add(FromCpp(Item));
 			}
 		}
+		Result.bHasUnlisted = Value.Unlisted.has_value();
+		if (Value.Unlisted)
+		{
+			Result.Unlisted = (*Value.Unlisted);
+		}
 		return Result;
 	}
 
@@ -11590,6 +12576,10 @@ namespace Haiven::Blueprint
 			}
 			Result.Tags = std::move(TagsItems);
 		}
+		if (Value.bHasUnlisted)
+		{
+			Result.Unlisted = Value.Unlisted;
+		}
 		return Result;
 	}
 
@@ -11663,6 +12653,11 @@ namespace Haiven::Blueprint
 		{
 			Result.Name = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Name));
 		}
+		Result.bHasPublicId = Value.PublicId.has_value();
+		if (Value.PublicId)
+		{
+			Result.PublicId = (*Value.PublicId);
+		}
 		Result.bHasRating = Value.Rating.has_value();
 		if (Value.Rating)
 		{
@@ -11706,6 +12701,10 @@ namespace Haiven::Blueprint
 		if (Value.bHasName)
 		{
 			Result.Name = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Name);
+		}
+		if (Value.bHasPublicId)
+		{
+			Result.PublicId = Value.PublicId;
 		}
 		if (Value.bHasRating)
 		{
@@ -12090,6 +13089,27 @@ namespace Haiven::Blueprint
 		return Result;
 	}
 
+	FHaivenRestUnreadCount FromCpp(const Haiven::RestTypes::UnreadCount& Value)
+	{
+		FHaivenRestUnreadCount Result;
+		Result.bHasCount = Value.Count.has_value();
+		if (Value.Count)
+		{
+			Result.Count = (*Value.Count);
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::UnreadCount ToCpp(const FHaivenRestUnreadCount& Value)
+	{
+		Haiven::RestTypes::UnreadCount Result;
+		if (Value.bHasCount)
+		{
+			Result.Count = Value.Count;
+		}
+		return Result;
+	}
+
 	FHaivenRestUpdateAppRequest FromCpp(const Haiven::RestTypes::UpdateAppRequest& Value)
 	{
 		FHaivenRestUpdateAppRequest Result;
@@ -12206,6 +13226,11 @@ namespace Haiven::Blueprint
 		{
 			Result.Name = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Name));
 		}
+		Result.bHasPublicId = Value.PublicId.has_value();
+		if (Value.PublicId)
+		{
+			Result.PublicId = (*Value.PublicId);
+		}
 		Result.bHasPublishers = Value.Publishers.has_value();
 		if (Value.Publishers)
 		{
@@ -12255,6 +13280,10 @@ namespace Haiven::Blueprint
 		if (Value.bHasName)
 		{
 			Result.Name = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Name);
+		}
+		if (Value.bHasPublicId)
+		{
+			Result.PublicId = Value.PublicId;
 		}
 		if (Value.bHasPublishers)
 		{
@@ -12503,6 +13532,53 @@ namespace Haiven::Blueprint
 		if (Value.bHasType)
 		{
 			Result.Type = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Type);
+		}
+		return Result;
+	}
+
+	FHaivenRestUpdateRequest FromCpp(const Haiven::RestTypes::UpdateRequest& Value)
+	{
+		FHaivenRestUpdateRequest Result;
+		Result.bHasLocked = Value.Locked.has_value();
+		if (Value.Locked)
+		{
+			Result.Locked = (*Value.Locked);
+		}
+		Result.bHasMetadata = Value.Metadata.has_value();
+		if (Value.Metadata)
+		{
+			for (const auto& Entry : (*Value.Metadata))
+			{
+				Result.Metadata.Add(HaivenBlueprintRestTypesDetail::FromUtf8(Entry.first), HaivenBlueprintRestTypesDetail::FromUtf8(Entry.second));
+			}
+		}
+		Result.bHasVisibility = Value.Visibility.has_value();
+		if (Value.Visibility)
+		{
+			Result.Visibility = HaivenBlueprintRestTypesDetail::FromUtf8((*Value.Visibility));
+		}
+		return Result;
+	}
+
+	Haiven::RestTypes::UpdateRequest ToCpp(const FHaivenRestUpdateRequest& Value)
+	{
+		Haiven::RestTypes::UpdateRequest Result;
+		if (Value.bHasLocked)
+		{
+			Result.Locked = Value.Locked;
+		}
+		if (Value.bHasMetadata)
+		{
+			std::map<std::string, std::string> MetadataEntries;
+			for (const auto& Entry : Value.Metadata)
+			{
+				MetadataEntries.emplace(HaivenBlueprintRestTypesDetail::ToUtf8(Entry.Key), HaivenBlueprintRestTypesDetail::ToUtf8(Entry.Value));
+			}
+			Result.Metadata = std::move(MetadataEntries);
+		}
+		if (Value.bHasVisibility)
+		{
+			Result.Visibility = HaivenBlueprintRestTypesDetail::ToUtf8(Value.Visibility);
 		}
 		return Result;
 	}

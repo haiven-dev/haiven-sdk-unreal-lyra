@@ -46,8 +46,8 @@ namespace Haiven
 	};
 
 	/**
-	 * Headless chat over FSessionCore: the engine-free half of the plugin's chat
-	 * (HAVN-1180), the C++ counterpart of the .NET core's HaivenChat.
+	 * Headless chat over FSessionCore: the engine-free half of the plugin's chat.
+	 * The C++ counterpart of the .NET core's HaivenChat.
 	 *
 	 * A session is one socket, so this outlives sessions: Attach each session the
 	 * game opens, including after a reconnect. Every send carries a client

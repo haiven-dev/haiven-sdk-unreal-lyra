@@ -33,6 +33,7 @@ namespace Haiven
 		std::optional<std::string> ExpiresAt;
 	};
 
+	/// The payload of a presence update.
 	struct WsPresenceEventV0
 	{
 		/// The user whose presence changed.

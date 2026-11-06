@@ -42,6 +42,7 @@ namespace Haiven
 		std::string LeftAt;
 	};
 
+	/// A direct-message channel and its other participant.
 	struct ChatDmV0
 	{
 		/// The chat channel identifier.

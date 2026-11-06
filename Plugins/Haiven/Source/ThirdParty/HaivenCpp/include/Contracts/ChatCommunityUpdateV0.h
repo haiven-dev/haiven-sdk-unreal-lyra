@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A visible update to a chat community.
 	struct ChatCommunityUpdateV0
 	{
 		/// The chat community identifier.

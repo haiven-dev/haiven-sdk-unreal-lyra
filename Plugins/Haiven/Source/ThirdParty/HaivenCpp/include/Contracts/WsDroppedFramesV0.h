@@ -21,6 +21,7 @@ namespace Haiven
 		int Count;
 	};
 
+	/// A report of the server-originated frames discarded while a session was expired.
 	struct WsDroppedFramesV0
 	{
 		/// How many frames were discarded during the expiry episode.

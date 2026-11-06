@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A moderation decision made after the send or edit reply changed a message's state, sent only to its author's open sockets. It carries the author's own clientMessageId so the client can match it to the message it sent.
 	struct ChatMessageModeratedV0
 	{
 		/// The chat message identifier.

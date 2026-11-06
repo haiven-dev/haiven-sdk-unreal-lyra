@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A deleted notification identifier.
 	struct NotificationDeleteV0
 	{
 		/// The stable identifier of this value.

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "HaivenCredentialLifecycle.h"
 #include "HaivenProtocol.h"
 
 #include <deque>
@@ -19,6 +20,51 @@ namespace Haiven
 		Expired,
 		Closed,
 	};
+
+	/**
+	 * What a socket close means for the credential that opened it. Finite and
+	 * SDK-local: the server sends a close code and a reason string, and this is
+	 * the part of them a game acts on.
+	 */
+	enum class ECloseKind
+	{
+		/// The connection ended for a reason unrelated to the credential: network
+		/// loss, a server restart, or the caller's own close. The credential is
+		/// still good, and a new socket may authenticate with it.
+		Transport,
+		/// `1008 unauthorized`: the server refused the credential in the handshake.
+		CredentialRefused,
+		/// `1008 credential_revoked`: the player or an operator revoked the game
+		/// credential while the socket was open.
+		CredentialRevoked,
+		/// Any other `1008`, for example `parental_consent_denied`. The server
+		/// refused this socket for a reason a new socket with the same credential
+		/// does not change.
+		Policy,
+	};
+
+	/// `websocket.StatusPolicyViolation`: every close the server makes on purpose.
+	inline constexpr int PolicyViolationCloseCode = 1008;
+
+	/// Classifies a close by its code and reason alone, identically in every SDK.
+	inline ECloseKind ClassifyClose(int Code, const std::string& Reason)
+	{
+		if (Code != PolicyViolationCloseCode) return ECloseKind::Transport;
+		if (Reason == "unauthorized") return ECloseKind::CredentialRefused;
+		if (Reason == "credential_revoked") return ECloseKind::CredentialRevoked;
+		return ECloseKind::Policy;
+	}
+
+	/// True when the credential will not authenticate again: discard it and run
+	/// the game login handoff before opening another socket.
+	inline bool CloseRequiresSignIn(ECloseKind Kind)
+	{
+		return Kind == ECloseKind::CredentialRefused || Kind == ECloseKind::CredentialRevoked;
+	}
+
+	/// True when a new socket may authenticate with the same credential. Only a
+	/// transport close qualifies; reconnecting after any `1008` repeats the refusal.
+	inline bool CloseMayReconnect(ECloseKind Kind) { return Kind == ECloseKind::Transport; }
 
 	struct FClientFrame
 	{
@@ -41,6 +87,7 @@ namespace Haiven
 		using FFrameHandler = std::function<void(const FServerFrame&, const std::string&)>;
 		using FStateHandler = std::function<void(ESessionState)>;
 		using FCloseHandler = std::function<void(int, const std::string&)>;
+		using FCredentialActionHandler = std::function<void(ECredentialAction)>;
 
 		FSessionCore(FWrite InWrite, FTokenSource InTokenSource, FRequestIdSource InRequestIdSource)
 			: Write(std::move(InWrite))
@@ -54,6 +101,10 @@ namespace Haiven
 		}
 
 		ESessionState GetState() const { return State; }
+
+		/// What the close means for the credential, once the session is closed;
+		/// empty before. Set before `OnStateChanged` and `OnClosed` run.
+		std::optional<ECloseKind> GetCloseKind() const { return CloseKind; }
 
 		void Opened()
 		{
@@ -121,9 +172,13 @@ namespace Haiven
 
 			if (Frame.Type == AuthFailureType)
 			{
-				// The replacement credential was refused: not a lapse to recover from.
-				// Staying expired means a later auth.expired starts no further re-auth.
+				// Same-socket refusal is not proof the credential is invalid. A
+				// fresh first-frame handshake is the authoritative check.
 				SetState(ESessionState::Expired);
+				const ECredentialAction CredentialAction =
+					FCredentialLifecycle::ForAuthenticationFailure(Frame.Error.value_or(""));
+				if (CredentialAction != ECredentialAction::Retain && OnCredentialActionRequired)
+					OnCredentialActionRequired(CredentialAction);
 				if (OnAuthenticationFailed) OnAuthenticationFailed(Frame.Error.value_or(""));
 				return;
 			}
@@ -148,10 +203,19 @@ namespace Haiven
 		void Closed(int Code, std::string Reason)
 		{
 			if (State == ESessionState::Closed) return;
+			const ESessionState PreviousState = State;
+			CloseKind = ClassifyClose(Code, Reason);
 			SetState(ESessionState::Closed);
 			Pending.clear();
 			InFlight.clear();
 			AwaitingResend.clear();
+			const ECredentialSocketPhase Phase = PreviousState == ESessionState::Pending
+				|| PreviousState == ESessionState::Authenticating
+				? ECredentialSocketPhase::InitialAuthentication
+				: ECredentialSocketPhase::Live;
+			const ECredentialAction CredentialAction = FCredentialLifecycle::ForSocketClose(Phase, Code, Reason);
+			if (CredentialAction != ECredentialAction::Retain && OnCredentialActionRequired)
+				OnCredentialActionRequired(CredentialAction);
 			if (OnClosed) OnClosed(Code, Reason);
 		}
 
@@ -160,8 +224,9 @@ namespace Haiven
 		FFrameHandler OnEvent;
 		std::function<void()> OnAuthenticated;
 		std::function<void()> OnExpired;
-		/// `auth.failure` on a live socket, with its code: the caller must sign in again.
+		/// `auth.failure` on a live socket; OnCredentialActionRequired says whether to retry fresh.
 		std::function<void(const std::string&)> OnAuthenticationFailed;
+		FCredentialActionHandler OnCredentialActionRequired;
 		FStateHandler OnStateChanged;
 		FCloseHandler OnClosed;
 
@@ -273,6 +338,7 @@ namespace Haiven
 		/// Refused or dropped requests, written again after the next auth.success.
 		std::deque<FClientFrame> AwaitingResend;
 		ESessionState State = ESessionState::Pending;
+		std::optional<ECloseKind> CloseKind;
 		bool bOpened = false;
 	};
 }

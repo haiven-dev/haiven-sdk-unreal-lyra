@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The payload a client sends on a notifications.read frame, marking a whole category read.
 	struct WsNotificationReadRequestV0
 	{
 		/// The notification category to mark read, one of chat, user or general.

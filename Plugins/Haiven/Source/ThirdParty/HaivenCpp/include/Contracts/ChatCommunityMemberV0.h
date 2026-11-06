@@ -30,6 +30,7 @@ namespace Haiven
 		std::optional<std::string> AvatarFrame;
 	};
 
+	/// A member of a chat community.
 	struct ChatCommunityMemberV0
 	{
 		/// The chat community identifier.

@@ -66,6 +66,10 @@ namespace Haiven
 		inline FJson Write(const AnalyticsEvent& Value);
 		inline bool Read(const FJson& Json, AnalyticsRejection& Out, std::string& Error);
 		inline FJson Write(const AnalyticsRejection& Value);
+		inline bool Read(const FJson& Json, Announcement& Out, std::string& Error);
+		inline FJson Write(const Announcement& Value);
+		inline bool Read(const FJson& Json, AnnouncementPage& Out, std::string& Error);
+		inline FJson Write(const AnnouncementPage& Value);
 		inline bool Read(const FJson& Json, App& Out, std::string& Error);
 		inline FJson Write(const App& Value);
 		inline bool Read(const FJson& Json, ScreenShot& Out, std::string& Error);
@@ -104,8 +108,8 @@ namespace Haiven
 		inline FJson Write(const AvatarFramesResponse& Value);
 		inline bool Read(const FJson& Json, Build& Out, std::string& Error);
 		inline FJson Write(const Build& Value);
-		inline bool Read(const FJson& Json, BuildPlatform& Out, std::string& Error);
-		inline FJson Write(const BuildPlatform& Value);
+		inline bool Read(const FJson& Json, BuildPlatformResponse& Out, std::string& Error);
+		inline FJson Write(const BuildPlatformResponse& Value);
 		inline bool Read(const FJson& Json, CatalogOffer& Out, std::string& Error);
 		inline FJson Write(const CatalogOffer& Value);
 		inline bool Read(const FJson& Json, CatalogPage& Out, std::string& Error);
@@ -204,6 +208,10 @@ namespace Haiven
 		inline FJson Write(const CreateHandoffResponse& Value);
 		inline bool Read(const FJson& Json, CreateImageItemResponse& Out, std::string& Error);
 		inline FJson Write(const CreateImageItemResponse& Value);
+		inline bool Read(const FJson& Json, CreateRequest& Out, std::string& Error);
+		inline FJson Write(const CreateRequest& Value);
+		inline bool Read(const FJson& Json, CreateResponse& Out, std::string& Error);
+		inline FJson Write(const CreateResponse& Value);
 		inline bool Read(const FJson& Json, CreateRewardRequest& Out, std::string& Error);
 		inline FJson Write(const CreateRewardRequest& Value);
 		inline bool Read(const FJson& Json, CreateRoleRequest& Out, std::string& Error);
@@ -280,8 +288,12 @@ namespace Haiven
 		inline FJson Write(const FriendOptions& Value);
 		inline bool Read(const FJson& Json, FriendRequest& Out, std::string& Error);
 		inline FJson Write(const FriendRequest& Value);
-		inline bool Read(const FJson& Json, GameCredentialRecord& Out, std::string& Error);
-		inline FJson Write(const GameCredentialRecord& Value);
+		inline bool Read(const FJson& Json, GameAccessResponse& Out, std::string& Error);
+		inline FJson Write(const GameAccessResponse& Value);
+		inline bool Read(const FJson& Json, GameCredentialResponse& Out, std::string& Error);
+		inline FJson Write(const GameCredentialResponse& Value);
+		inline bool Read(const FJson& Json, GameCredentialsResponse& Out, std::string& Error);
+		inline FJson Write(const GameCredentialsResponse& Value);
 		inline bool Read(const FJson& Json, GenerateOTPResponse& Out, std::string& Error);
 		inline FJson Write(const GenerateOTPResponse& Value);
 		inline bool Read(const FJson& Json, GetBuildPlatformsByIDResponse& Out, std::string& Error);
@@ -316,6 +328,8 @@ namespace Haiven
 		inline FJson Write(const IntegrationsResponse& Value);
 		inline bool Read(const FJson& Json, Interests& Out, std::string& Error);
 		inline FJson Write(const Interests& Value);
+		inline bool Read(const FJson& Json, InviteRequest& Out, std::string& Error);
+		inline FJson Write(const InviteRequest& Value);
 		inline bool Read(const FJson& Json, UserInfo& Out, std::string& Error);
 		inline FJson Write(const UserInfo& Value);
 		inline bool Read(const FJson& Json, InviteResponse& Out, std::string& Error);
@@ -324,6 +338,10 @@ namespace Haiven
 		inline FJson Write(const IssueServerKeyRequest& Value);
 		inline bool Read(const FJson& Json, IssuedServerKeyResponse& Out, std::string& Error);
 		inline FJson Write(const IssuedServerKeyResponse& Value);
+		inline bool Read(const FJson& Json, JoinRequest& Out, std::string& Error);
+		inline FJson Write(const JoinRequest& Value);
+		inline bool Read(const FJson& Json, JoinResponse& Out, std::string& Error);
+		inline FJson Write(const JoinResponse& Value);
 		inline bool Read(const FJson& Json, JurisdictionAppealRequest& Out, std::string& Error);
 		inline FJson Write(const JurisdictionAppealRequest& Value);
 		inline bool Read(const FJson& Json, ListAppsByStudioRow& Out, std::string& Error);
@@ -340,6 +358,8 @@ namespace Haiven
 		inline FJson Write(const StudioRoleSummary& Value);
 		inline bool Read(const FJson& Json, ListStudioMemberResponse& Out, std::string& Error);
 		inline FJson Write(const ListStudioMemberResponse& Value);
+		inline bool Read(const FJson& Json, ListedSession& Out, std::string& Error);
+		inline FJson Write(const ListedSession& Value);
 		inline bool Read(const FJson& Json, LoginRequest& Out, std::string& Error);
 		inline FJson Write(const LoginRequest& Value);
 		inline bool Read(const FJson& Json, LoginResponse& Out, std::string& Error);
@@ -372,6 +392,8 @@ namespace Haiven
 		inline FJson Write(const ParentLinkStatus& Value);
 		inline bool Read(const FJson& Json, PlatformRequirement& Out, std::string& Error);
 		inline FJson Write(const PlatformRequirement& Value);
+		inline bool Read(const FJson& Json, PlayerStatus& Out, std::string& Error);
+		inline FJson Write(const PlayerStatus& Value);
 		inline bool Read(const FJson& Json, PreferenceSettings& Out, std::string& Error);
 		inline FJson Write(const PreferenceSettings& Value);
 		inline bool Read(const FJson& Json, Profile& Out, std::string& Error);
@@ -428,6 +450,10 @@ namespace Haiven
 		inline FJson Write(const RewardsResponse& Value);
 		inline bool Read(const FJson& Json, Role& Out, std::string& Error);
 		inline FJson Write(const Role& Value);
+		inline bool Read(const FJson& Json, RosterMember& Out, std::string& Error);
+		inline FJson Write(const RosterMember& Value);
+		inline bool Read(const FJson& Json, Roster& Out, std::string& Error);
+		inline FJson Write(const Roster& Value);
 		inline bool Read(const FJson& Json, Scanning& Out, std::string& Error);
 		inline FJson Write(const Scanning& Value);
 		inline bool Read(const FJson& Json, SearchMatchResponse& Out, std::string& Error);
@@ -442,8 +468,14 @@ namespace Haiven
 		inline FJson Write(const ServerKeyResponse& Value);
 		inline bool Read(const FJson& Json, ServerKeysResponse& Out, std::string& Error);
 		inline FJson Write(const ServerKeysResponse& Value);
+		inline bool Read(const FJson& Json, SessionList& Out, std::string& Error);
+		inline FJson Write(const SessionList& Value);
+		inline bool Read(const FJson& Json, SetAppOfficialCommunityRequest& Out, std::string& Error);
+		inline FJson Write(const SetAppOfficialCommunityRequest& Value);
 		inline bool Read(const FJson& Json, SetAppReviewKeyRequest& Out, std::string& Error);
 		inline FJson Write(const SetAppReviewKeyRequest& Value);
+		inline bool Read(const FJson& Json, SetRedirectURIsRequest& Out, std::string& Error);
+		inline FJson Write(const SetRedirectURIsRequest& Value);
 		inline bool Read(const FJson& Json, SetUpPasswordRequest& Out, std::string& Error);
 		inline FJson Write(const SetUpPasswordRequest& Value);
 		inline bool Read(const FJson& Json, Shelf& Out, std::string& Error);
@@ -480,6 +512,8 @@ namespace Haiven
 		inline FJson Write(const SubscriptionState& Value);
 		inline bool Read(const FJson& Json, TrustedAdultVerificationRequest& Out, std::string& Error);
 		inline FJson Write(const TrustedAdultVerificationRequest& Value);
+		inline bool Read(const FJson& Json, UnreadCount& Out, std::string& Error);
+		inline FJson Write(const UnreadCount& Value);
 		inline bool Read(const FJson& Json, UpdateAppRequest& Out, std::string& Error);
 		inline FJson Write(const UpdateAppRequest& Value);
 		inline bool Read(const FJson& Json, UpdateAppRow& Out, std::string& Error);
@@ -494,6 +528,8 @@ namespace Haiven
 		inline FJson Write(const UpdateExternalLinkRow& Value);
 		inline bool Read(const FJson& Json, UpdateExternalLinks& Out, std::string& Error);
 		inline FJson Write(const UpdateExternalLinks& Value);
+		inline bool Read(const FJson& Json, UpdateRequest& Out, std::string& Error);
+		inline FJson Write(const UpdateRequest& Value);
 		inline bool Read(const FJson& Json, UpdateRewardRequest& Out, std::string& Error);
 		inline FJson Write(const UpdateRewardRequest& Value);
 		inline bool Read(const FJson& Json, UpdateRoleRequest& Out, std::string& Error);
@@ -1849,6 +1885,138 @@ namespace Haiven
 			return Json;
 		}
 
+		inline bool Read(const FJson& Json, Announcement& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			Announcement Result;
+			if (const FJson* Value = Json.Find("body"))
+			{
+				if (!Read(*Value, Result.Body, Error))
+				{
+					Error = "body: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("category"))
+			{
+				if (!Read(*Value, Result.Category, Error))
+				{
+					Error = "category: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("coverImageUrl"))
+			{
+				if (!Read(*Value, Result.CoverImageUrl, Error))
+				{
+					Error = "coverImageUrl: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("id"))
+			{
+				if (!Read(*Value, Result.Id, Error))
+				{
+					Error = "id: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("publishedAt"))
+			{
+				if (!Read(*Value, Result.PublishedAt, Error))
+				{
+					Error = "publishedAt: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("title"))
+			{
+				if (!Read(*Value, Result.Title, Error))
+				{
+					Error = "title: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const Announcement& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.Body)
+			{
+				Json.Set("body", Write(*Value.Body));
+			}
+			if (Value.Category)
+			{
+				Json.Set("category", Write(*Value.Category));
+			}
+			if (Value.CoverImageUrl)
+			{
+				Json.Set("coverImageUrl", Write(*Value.CoverImageUrl));
+			}
+			if (Value.Id)
+			{
+				Json.Set("id", Write(*Value.Id));
+			}
+			if (Value.PublishedAt)
+			{
+				Json.Set("publishedAt", Write(*Value.PublishedAt));
+			}
+			if (Value.Title)
+			{
+				Json.Set("title", Write(*Value.Title));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, AnnouncementPage& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			AnnouncementPage Result;
+			if (const FJson* Value = Json.Find("items"))
+			{
+				if (!Read(*Value, Result.Items, Error))
+				{
+					Error = "items: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("total"))
+			{
+				if (!Read(*Value, Result.Total, Error))
+				{
+					Error = "total: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const AnnouncementPage& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.Items)
+			{
+				Json.Set("items", Write(*Value.Items));
+			}
+			if (Value.Total)
+			{
+				Json.Set("total", Write(*Value.Total));
+			}
+			return Json;
+		}
+
 		inline bool Read(const FJson& Json, App& Out, std::string& Error)
 		{
 			if (!Json.IsObject())
@@ -1910,6 +2078,14 @@ namespace Haiven
 				if (!Read(*Value, Result.OfficialCommunityId, Error))
 				{
 					Error = "officialCommunityId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("publicId"))
+			{
+				if (!Read(*Value, Result.PublicId, Error))
+				{
+					Error = "publicId: " + Error;
 					return false;
 				}
 			}
@@ -2003,6 +2179,10 @@ namespace Haiven
 			if (Value.OfficialCommunityId)
 			{
 				Json.Set("officialCommunityId", Write(*Value.OfficialCommunityId));
+			}
+			if (Value.PublicId)
+			{
+				Json.Set("publicId", Write(*Value.PublicId));
 			}
 			if (Value.PublishedAt)
 			{
@@ -3297,22 +3477,14 @@ namespace Haiven
 			return Json;
 		}
 
-		inline bool Read(const FJson& Json, BuildPlatform& Out, std::string& Error)
+		inline bool Read(const FJson& Json, BuildPlatformResponse& Out, std::string& Error)
 		{
 			if (!Json.IsObject())
 			{
 				Error = "expected an object";
 				return false;
 			}
-			BuildPlatform Result;
-			if (const FJson* Value = Json.Find("buildId"))
-			{
-				if (!Read(*Value, Result.BuildId, Error))
-				{
-					Error = "buildId: " + Error;
-					return false;
-				}
-			}
+			BuildPlatformResponse Result;
 			if (const FJson* Value = Json.Find("createdAt"))
 			{
 				if (!Read(*Value, Result.CreatedAt, Error))
@@ -3337,14 +3509,6 @@ namespace Haiven
 					return false;
 				}
 			}
-			if (const FJson* Value = Json.Find("objStoreUrl"))
-			{
-				if (!Read(*Value, Result.ObjStoreUrl, Error))
-				{
-					Error = "objStoreUrl: " + Error;
-					return false;
-				}
-			}
 			if (const FJson* Value = Json.Find("platformCode"))
 			{
 				if (!Read(*Value, Result.PlatformCode, Error))
@@ -3365,13 +3529,9 @@ namespace Haiven
 			return true;
 		}
 
-		inline FJson Write(const BuildPlatform& Value)
+		inline FJson Write(const BuildPlatformResponse& Value)
 		{
 			FJson Json = FJson::MakeObject();
-			if (Value.BuildId)
-			{
-				Json.Set("buildId", Write(*Value.BuildId));
-			}
 			if (Value.CreatedAt)
 			{
 				Json.Set("createdAt", Write(*Value.CreatedAt));
@@ -3383,10 +3543,6 @@ namespace Haiven
 			if (Value.IsDisabled)
 			{
 				Json.Set("isDisabled", Write(*Value.IsDisabled));
-			}
-			if (Value.ObjStoreUrl)
-			{
-				Json.Set("objStoreUrl", Write(*Value.ObjStoreUrl));
 			}
 			if (Value.PlatformCode)
 			{
@@ -3725,6 +3881,14 @@ namespace Haiven
 					return false;
 				}
 			}
+			if (const FJson* Value = Json.Find("status"))
+			{
+				if (!Read(*Value, Result.Status, Error))
+				{
+					Error = "status: " + Error;
+					return false;
+				}
+			}
 			Out = std::move(Result);
 			return true;
 		}
@@ -3743,6 +3907,10 @@ namespace Haiven
 			if (Value.RewardRef)
 			{
 				Json.Set("rewardRef", Write(*Value.RewardRef));
+			}
+			if (Value.Status)
+			{
+				Json.Set("status", Write(*Value.Status));
 			}
 			return Json;
 		}
@@ -6465,6 +6633,222 @@ namespace Haiven
 			return Json;
 		}
 
+		inline bool Read(const FJson& Json, CreateRequest& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			CreateRequest Result;
+			if (const FJson* Value = Json.Find("admissionId"))
+			{
+				if (!Read(*Value, Result.AdmissionId, Error))
+				{
+					Error = "admissionId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("allowMixedAges"))
+			{
+				if (!Read(*Value, Result.AllowMixedAges, Error))
+				{
+					Error = "allowMixedAges: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("connectionId"))
+			{
+				if (!Read(*Value, Result.ConnectionId, Error))
+				{
+					Error = "connectionId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("joinPayload"))
+			{
+				if (!Read(*Value, Result.JoinPayload, Error))
+				{
+					Error = "joinPayload: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("maxMembers"))
+			{
+				if (!Read(*Value, Result.MaxMembers, Error))
+				{
+					Error = "maxMembers: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("metadata"))
+			{
+				if (!Read(*Value, Result.Metadata, Error))
+				{
+					Error = "metadata: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("requireRelay"))
+			{
+				if (!Read(*Value, Result.RequireRelay, Error))
+				{
+					Error = "requireRelay: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("resumeToken"))
+			{
+				if (!Read(*Value, Result.ResumeToken, Error))
+				{
+					Error = "resumeToken: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("visibility"))
+			{
+				if (!Read(*Value, Result.Visibility, Error))
+				{
+					Error = "visibility: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const CreateRequest& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.AdmissionId)
+			{
+				Json.Set("admissionId", Write(*Value.AdmissionId));
+			}
+			if (Value.AllowMixedAges)
+			{
+				Json.Set("allowMixedAges", Write(*Value.AllowMixedAges));
+			}
+			if (Value.ConnectionId)
+			{
+				Json.Set("connectionId", Write(*Value.ConnectionId));
+			}
+			if (Value.JoinPayload)
+			{
+				Json.Set("joinPayload", Write(*Value.JoinPayload));
+			}
+			if (Value.MaxMembers)
+			{
+				Json.Set("maxMembers", Write(*Value.MaxMembers));
+			}
+			if (Value.Metadata)
+			{
+				Json.Set("metadata", Write(*Value.Metadata));
+			}
+			if (Value.RequireRelay)
+			{
+				Json.Set("requireRelay", Write(*Value.RequireRelay));
+			}
+			if (Value.ResumeToken)
+			{
+				Json.Set("resumeToken", Write(*Value.ResumeToken));
+			}
+			if (Value.Visibility)
+			{
+				Json.Set("visibility", Write(*Value.Visibility));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, CreateResponse& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			CreateResponse Result;
+			if (const FJson* Value = Json.Find("chatChannelId"))
+			{
+				if (!Read(*Value, Result.ChatChannelId, Error))
+				{
+					Error = "chatChannelId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("joinCode"))
+			{
+				if (!Read(*Value, Result.JoinCode, Error))
+				{
+					Error = "joinCode: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("participationId"))
+			{
+				if (!Read(*Value, Result.ParticipationId, Error))
+				{
+					Error = "participationId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("relayPolicy"))
+			{
+				if (!Read(*Value, Result.RelayPolicy, Error))
+				{
+					Error = "relayPolicy: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("sessionId"))
+			{
+				if (!Read(*Value, Result.SessionId, Error))
+				{
+					Error = "sessionId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("state"))
+			{
+				if (!Read(*Value, Result.State, Error))
+				{
+					Error = "state: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const CreateResponse& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.ChatChannelId)
+			{
+				Json.Set("chatChannelId", Write(*Value.ChatChannelId));
+			}
+			if (Value.JoinCode)
+			{
+				Json.Set("joinCode", Write(*Value.JoinCode));
+			}
+			if (Value.ParticipationId)
+			{
+				Json.Set("participationId", Write(*Value.ParticipationId));
+			}
+			if (Value.RelayPolicy)
+			{
+				Json.Set("relayPolicy", Write(*Value.RelayPolicy));
+			}
+			if (Value.SessionId)
+			{
+				Json.Set("sessionId", Write(*Value.SessionId));
+			}
+			if (Value.State)
+			{
+				Json.Set("state", Write(*Value.State));
+			}
+			return Json;
+		}
+
 		inline bool Read(const FJson& Json, CreateRewardRequest& Out, std::string& Error)
 		{
 			if (!Json.IsObject())
@@ -9061,14 +9445,100 @@ namespace Haiven
 			return Json;
 		}
 
-		inline bool Read(const FJson& Json, GameCredentialRecord& Out, std::string& Error)
+		inline bool Read(const FJson& Json, GameAccessResponse& Out, std::string& Error)
 		{
 			if (!Json.IsObject())
 			{
 				Error = "expected an object";
 				return false;
 			}
-			GameCredentialRecord Result;
+			GameAccessResponse Result;
+			if (const FJson* Value = Json.Find("access"))
+			{
+				if (!Read(*Value, Result.Access, Error))
+				{
+					Error = "access: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("basis"))
+			{
+				if (!Read(*Value, Result.Basis, Error))
+				{
+					Error = "basis: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("permanent"))
+			{
+				if (!Read(*Value, Result.Permanent, Error))
+				{
+					Error = "permanent: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("refundHold"))
+			{
+				if (!Read(*Value, Result.RefundHold, Error))
+				{
+					Error = "refundHold: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("validTo"))
+			{
+				if (!Read(*Value, Result.ValidTo, Error))
+				{
+					Error = "validTo: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const GameAccessResponse& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.Access)
+			{
+				Json.Set("access", Write(*Value.Access));
+			}
+			if (Value.Basis)
+			{
+				Json.Set("basis", Write(*Value.Basis));
+			}
+			if (Value.Permanent)
+			{
+				Json.Set("permanent", Write(*Value.Permanent));
+			}
+			if (Value.RefundHold)
+			{
+				Json.Set("refundHold", Write(*Value.RefundHold));
+			}
+			if (Value.ValidTo)
+			{
+				Json.Set("validTo", Write(*Value.ValidTo));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, GameCredentialResponse& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			GameCredentialResponse Result;
+			if (const FJson* Value = Json.Find("credentialId"))
+			{
+				if (!Read(*Value, Result.CredentialId, Error))
+				{
+					Error = "credentialId: " + Error;
+					return false;
+				}
+			}
 			if (const FJson* Value = Json.Find("expiresAt"))
 			{
 				if (!Read(*Value, Result.ExpiresAt, Error))
@@ -9077,11 +9547,19 @@ namespace Haiven
 					return false;
 				}
 			}
-			if (const FJson* Value = Json.Find("id"))
+			if (const FJson* Value = Json.Find("gameId"))
 			{
-				if (!Read(*Value, Result.Id, Error))
+				if (!Read(*Value, Result.GameId, Error))
 				{
-					Error = "id: " + Error;
+					Error = "gameId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("gameTitle"))
+			{
+				if (!Read(*Value, Result.GameTitle, Error))
+				{
+					Error = "gameTitle: " + Error;
 					return false;
 				}
 			}
@@ -9113,16 +9591,24 @@ namespace Haiven
 			return true;
 		}
 
-		inline FJson Write(const GameCredentialRecord& Value)
+		inline FJson Write(const GameCredentialResponse& Value)
 		{
 			FJson Json = FJson::MakeObject();
+			if (Value.CredentialId)
+			{
+				Json.Set("credentialId", Write(*Value.CredentialId));
+			}
 			if (Value.ExpiresAt)
 			{
 				Json.Set("expiresAt", Write(*Value.ExpiresAt));
 			}
-			if (Value.Id)
+			if (Value.GameId)
 			{
-				Json.Set("id", Write(*Value.Id));
+				Json.Set("gameId", Write(*Value.GameId));
+			}
+			if (Value.GameTitle)
+			{
+				Json.Set("gameTitle", Write(*Value.GameTitle));
 			}
 			if (Value.IntegrationId)
 			{
@@ -9135,6 +9621,36 @@ namespace Haiven
 			if (Value.RevokedAt)
 			{
 				Json.Set("revokedAt", Write(*Value.RevokedAt));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, GameCredentialsResponse& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			GameCredentialsResponse Result;
+			if (const FJson* Value = Json.Find("items"))
+			{
+				if (!Read(*Value, Result.Items, Error))
+				{
+					Error = "items: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const GameCredentialsResponse& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.Items)
+			{
+				Json.Set("items", Write(*Value.Items));
 			}
 			return Json;
 		}
@@ -9947,6 +10463,14 @@ namespace Haiven
 					return false;
 				}
 			}
+			if (const FJson* Value = Json.Find("redirectUris"))
+			{
+				if (!Read(*Value, Result.RedirectUris, Error))
+				{
+					Error = "redirectUris: " + Error;
+					return false;
+				}
+			}
 			Out = std::move(Result);
 			return true;
 		}
@@ -9977,6 +10501,10 @@ namespace Haiven
 			if (Value.LoginConfigured)
 			{
 				Json.Set("loginConfigured", Write(*Value.LoginConfigured));
+			}
+			if (Value.RedirectUris)
+			{
+				Json.Set("redirectUris", Write(*Value.RedirectUris));
 			}
 			return Json;
 		}
@@ -10253,6 +10781,36 @@ namespace Haiven
 			if (Value.Play)
 			{
 				Json.Set("play", Write(*Value.Play));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, InviteRequest& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			InviteRequest Result;
+			if (const FJson* Value = Json.Find("userId"))
+			{
+				if (!Read(*Value, Result.UserId, Error))
+				{
+					Error = "userId: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const InviteRequest& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.UserId)
+			{
+				Json.Set("userId", Write(*Value.UserId));
 			}
 			return Json;
 		}
@@ -10641,6 +11199,174 @@ namespace Haiven
 			return Json;
 		}
 
+		inline bool Read(const FJson& Json, JoinRequest& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			JoinRequest Result;
+			if (const FJson* Value = Json.Find("admissionId"))
+			{
+				if (!Read(*Value, Result.AdmissionId, Error))
+				{
+					Error = "admissionId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("connectionId"))
+			{
+				if (!Read(*Value, Result.ConnectionId, Error))
+				{
+					Error = "connectionId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("joinCode"))
+			{
+				if (!Read(*Value, Result.JoinCode, Error))
+				{
+					Error = "joinCode: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("resumeToken"))
+			{
+				if (!Read(*Value, Result.ResumeToken, Error))
+				{
+					Error = "resumeToken: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const JoinRequest& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.AdmissionId)
+			{
+				Json.Set("admissionId", Write(*Value.AdmissionId));
+			}
+			if (Value.ConnectionId)
+			{
+				Json.Set("connectionId", Write(*Value.ConnectionId));
+			}
+			if (Value.JoinCode)
+			{
+				Json.Set("joinCode", Write(*Value.JoinCode));
+			}
+			if (Value.ResumeToken)
+			{
+				Json.Set("resumeToken", Write(*Value.ResumeToken));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, JoinResponse& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			JoinResponse Result;
+			if (const FJson* Value = Json.Find("chatChannelId"))
+			{
+				if (!Read(*Value, Result.ChatChannelId, Error))
+				{
+					Error = "chatChannelId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("hostUserId"))
+			{
+				if (!Read(*Value, Result.HostUserId, Error))
+				{
+					Error = "hostUserId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("joinPayload"))
+			{
+				if (!Read(*Value, Result.JoinPayload, Error))
+				{
+					Error = "joinPayload: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("participationId"))
+			{
+				if (!Read(*Value, Result.ParticipationId, Error))
+				{
+					Error = "participationId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("relayPolicy"))
+			{
+				if (!Read(*Value, Result.RelayPolicy, Error))
+				{
+					Error = "relayPolicy: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("sessionId"))
+			{
+				if (!Read(*Value, Result.SessionId, Error))
+				{
+					Error = "sessionId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("state"))
+			{
+				if (!Read(*Value, Result.State, Error))
+				{
+					Error = "state: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const JoinResponse& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.ChatChannelId)
+			{
+				Json.Set("chatChannelId", Write(*Value.ChatChannelId));
+			}
+			if (Value.HostUserId)
+			{
+				Json.Set("hostUserId", Write(*Value.HostUserId));
+			}
+			if (Value.JoinPayload)
+			{
+				Json.Set("joinPayload", Write(*Value.JoinPayload));
+			}
+			if (Value.ParticipationId)
+			{
+				Json.Set("participationId", Write(*Value.ParticipationId));
+			}
+			if (Value.RelayPolicy)
+			{
+				Json.Set("relayPolicy", Write(*Value.RelayPolicy));
+			}
+			if (Value.SessionId)
+			{
+				Json.Set("sessionId", Write(*Value.SessionId));
+			}
+			if (Value.State)
+			{
+				Json.Set("state", Write(*Value.State));
+			}
+			return Json;
+		}
+
 		inline bool Read(const FJson& Json, JurisdictionAppealRequest& Out, std::string& Error)
 		{
 			if (!Json.IsObject())
@@ -10739,6 +11465,14 @@ namespace Haiven
 					return false;
 				}
 			}
+			if (const FJson* Value = Json.Find("publicId"))
+			{
+				if (!Read(*Value, Result.PublicId, Error))
+				{
+					Error = "publicId: " + Error;
+					return false;
+				}
+			}
 			if (const FJson* Value = Json.Find("publishedAt"))
 			{
 				if (!Read(*Value, Result.PublishedAt, Error))
@@ -10833,6 +11567,10 @@ namespace Haiven
 			if (Value.Name)
 			{
 				Json.Set("name", Write(*Value.Name));
+			}
+			if (Value.PublicId)
+			{
+				Json.Set("publicId", Write(*Value.PublicId));
 			}
 			if (Value.PublishedAt)
 			{
@@ -11321,6 +12059,120 @@ namespace Haiven
 			if (Value.Username)
 			{
 				Json.Set("username", Write(*Value.Username));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, ListedSession& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			ListedSession Result;
+			if (const FJson* Value = Json.Find("hostUserId"))
+			{
+				if (!Read(*Value, Result.HostUserId, Error))
+				{
+					Error = "hostUserId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("maxMembers"))
+			{
+				if (!Read(*Value, Result.MaxMembers, Error))
+				{
+					Error = "maxMembers: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("memberCount"))
+			{
+				if (!Read(*Value, Result.MemberCount, Error))
+				{
+					Error = "memberCount: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("metadata"))
+			{
+				if (!Read(*Value, Result.Metadata, Error))
+				{
+					Error = "metadata: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("relayPolicy"))
+			{
+				if (!Read(*Value, Result.RelayPolicy, Error))
+				{
+					Error = "relayPolicy: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("sessionId"))
+			{
+				if (!Read(*Value, Result.SessionId, Error))
+				{
+					Error = "sessionId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("state"))
+			{
+				if (!Read(*Value, Result.State, Error))
+				{
+					Error = "state: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("visibility"))
+			{
+				if (!Read(*Value, Result.Visibility, Error))
+				{
+					Error = "visibility: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const ListedSession& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.HostUserId)
+			{
+				Json.Set("hostUserId", Write(*Value.HostUserId));
+			}
+			if (Value.MaxMembers)
+			{
+				Json.Set("maxMembers", Write(*Value.MaxMembers));
+			}
+			if (Value.MemberCount)
+			{
+				Json.Set("memberCount", Write(*Value.MemberCount));
+			}
+			if (Value.Metadata)
+			{
+				Json.Set("metadata", Write(*Value.Metadata));
+			}
+			if (Value.RelayPolicy)
+			{
+				Json.Set("relayPolicy", Write(*Value.RelayPolicy));
+			}
+			if (Value.SessionId)
+			{
+				Json.Set("sessionId", Write(*Value.SessionId));
+			}
+			if (Value.State)
+			{
+				Json.Set("state", Write(*Value.State));
+			}
+			if (Value.Visibility)
+			{
+				Json.Set("visibility", Write(*Value.Visibility));
 			}
 			return Json;
 		}
@@ -12401,6 +13253,60 @@ namespace Haiven
 			if (Value.UpdatedAt)
 			{
 				Json.Set("updatedAt", Write(*Value.UpdatedAt));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, PlayerStatus& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			PlayerStatus Result;
+			if (const FJson* Value = Json.Find("code"))
+			{
+				if (!Read(*Value, Result.Code, Error))
+				{
+					Error = "code: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("since"))
+			{
+				if (!Read(*Value, Result.Since, Error))
+				{
+					Error = "since: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("tier"))
+			{
+				if (!Read(*Value, Result.Tier, Error))
+				{
+					Error = "tier: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const PlayerStatus& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.Code)
+			{
+				Json.Set("code", Write(*Value.Code));
+			}
+			if (Value.Since)
+			{
+				Json.Set("since", Write(*Value.Since));
+			}
+			if (Value.Tier)
+			{
+				Json.Set("tier", Write(*Value.Tier));
 			}
 			return Json;
 		}
@@ -13945,6 +14851,14 @@ namespace Haiven
 					return false;
 				}
 			}
+			if (const FJson* Value = Json.Find("status"))
+			{
+				if (!Read(*Value, Result.Status, Error))
+				{
+					Error = "status: " + Error;
+					return false;
+				}
+			}
 			Out = std::move(Result);
 			return true;
 		}
@@ -13975,6 +14889,10 @@ namespace Haiven
 			if (Value.RewardRef)
 			{
 				Json.Set("rewardRef", Write(*Value.RewardRef));
+			}
+			if (Value.Status)
+			{
+				Json.Set("status", Write(*Value.Status));
 			}
 			return Json;
 		}
@@ -14019,6 +14937,14 @@ namespace Haiven
 					return false;
 				}
 			}
+			if (const FJson* Value = Json.Find("statuses"))
+			{
+				if (!Read(*Value, Result.Statuses, Error))
+				{
+					Error = "statuses: " + Error;
+					return false;
+				}
+			}
 			if (const FJson* Value = Json.Find("subscriptionValidTo"))
 			{
 				if (!Read(*Value, Result.SubscriptionValidTo, Error))
@@ -14049,6 +14975,10 @@ namespace Haiven
 			if (Value.ProjectionVersion)
 			{
 				Json.Set("projectionVersion", Write(*Value.ProjectionVersion));
+			}
+			if (Value.Statuses)
+			{
+				Json.Set("statuses", Write(*Value.Statuses));
 			}
 			if (Value.SubscriptionValidTo)
 			{
@@ -14351,6 +15281,222 @@ namespace Haiven
 			return Json;
 		}
 
+		inline bool Read(const FJson& Json, RosterMember& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			RosterMember Result;
+			if (const FJson* Value = Json.Find("isHost"))
+			{
+				if (!Read(*Value, Result.IsHost, Error))
+				{
+					Error = "isHost: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("participationId"))
+			{
+				if (!Read(*Value, Result.ParticipationId, Error))
+				{
+					Error = "participationId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("state"))
+			{
+				if (!Read(*Value, Result.State, Error))
+				{
+					Error = "state: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("userId"))
+			{
+				if (!Read(*Value, Result.UserId, Error))
+				{
+					Error = "userId: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const RosterMember& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.IsHost)
+			{
+				Json.Set("isHost", Write(*Value.IsHost));
+			}
+			if (Value.ParticipationId)
+			{
+				Json.Set("participationId", Write(*Value.ParticipationId));
+			}
+			if (Value.State)
+			{
+				Json.Set("state", Write(*Value.State));
+			}
+			if (Value.UserId)
+			{
+				Json.Set("userId", Write(*Value.UserId));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, Roster& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			Roster Result;
+			if (const FJson* Value = Json.Find("chatChannelId"))
+			{
+				if (!Read(*Value, Result.ChatChannelId, Error))
+				{
+					Error = "chatChannelId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("hostUserId"))
+			{
+				if (!Read(*Value, Result.HostUserId, Error))
+				{
+					Error = "hostUserId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("joinCode"))
+			{
+				if (!Read(*Value, Result.JoinCode, Error))
+				{
+					Error = "joinCode: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("joinPayload"))
+			{
+				if (!Read(*Value, Result.JoinPayload, Error))
+				{
+					Error = "joinPayload: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("maxMembers"))
+			{
+				if (!Read(*Value, Result.MaxMembers, Error))
+				{
+					Error = "maxMembers: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("members"))
+			{
+				if (!Read(*Value, Result.Members, Error))
+				{
+					Error = "members: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("metadata"))
+			{
+				if (!Read(*Value, Result.Metadata, Error))
+				{
+					Error = "metadata: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("relayPolicy"))
+			{
+				if (!Read(*Value, Result.RelayPolicy, Error))
+				{
+					Error = "relayPolicy: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("sessionId"))
+			{
+				if (!Read(*Value, Result.SessionId, Error))
+				{
+					Error = "sessionId: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("state"))
+			{
+				if (!Read(*Value, Result.State, Error))
+				{
+					Error = "state: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("visibility"))
+			{
+				if (!Read(*Value, Result.Visibility, Error))
+				{
+					Error = "visibility: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const Roster& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.ChatChannelId)
+			{
+				Json.Set("chatChannelId", Write(*Value.ChatChannelId));
+			}
+			if (Value.HostUserId)
+			{
+				Json.Set("hostUserId", Write(*Value.HostUserId));
+			}
+			if (Value.JoinCode)
+			{
+				Json.Set("joinCode", Write(*Value.JoinCode));
+			}
+			if (Value.JoinPayload)
+			{
+				Json.Set("joinPayload", Write(*Value.JoinPayload));
+			}
+			if (Value.MaxMembers)
+			{
+				Json.Set("maxMembers", Write(*Value.MaxMembers));
+			}
+			if (Value.Members)
+			{
+				Json.Set("members", Write(*Value.Members));
+			}
+			if (Value.Metadata)
+			{
+				Json.Set("metadata", Write(*Value.Metadata));
+			}
+			if (Value.RelayPolicy)
+			{
+				Json.Set("relayPolicy", Write(*Value.RelayPolicy));
+			}
+			if (Value.SessionId)
+			{
+				Json.Set("sessionId", Write(*Value.SessionId));
+			}
+			if (Value.State)
+			{
+				Json.Set("state", Write(*Value.State));
+			}
+			if (Value.Visibility)
+			{
+				Json.Set("visibility", Write(*Value.Visibility));
+			}
+			return Json;
+		}
+
 		inline bool Read(const FJson& Json, Scanning& Out, std::string& Error)
 		{
 			if (!Json.IsObject())
@@ -14579,6 +15725,14 @@ namespace Haiven
 					return false;
 				}
 			}
+			if (const FJson* Value = Json.Find("status"))
+			{
+				if (!Read(*Value, Result.Status, Error))
+				{
+					Error = "status: " + Error;
+					return false;
+				}
+			}
 			if (const FJson* Value = Json.Find("userId"))
 			{
 				if (!Read(*Value, Result.UserId, Error))
@@ -14601,6 +15755,10 @@ namespace Haiven
 			if (Value.RewardRef)
 			{
 				Json.Set("rewardRef", Write(*Value.RewardRef));
+			}
+			if (Value.Status)
+			{
+				Json.Set("status", Write(*Value.Status));
 			}
 			if (Value.UserId)
 			{
@@ -14765,6 +15923,78 @@ namespace Haiven
 			return Json;
 		}
 
+		inline bool Read(const FJson& Json, SessionList& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			SessionList Result;
+			if (const FJson* Value = Json.Find("cursor"))
+			{
+				if (!Read(*Value, Result.Cursor, Error))
+				{
+					Error = "cursor: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("items"))
+			{
+				if (!Read(*Value, Result.Items, Error))
+				{
+					Error = "items: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const SessionList& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.Cursor)
+			{
+				Json.Set("cursor", Write(*Value.Cursor));
+			}
+			if (Value.Items)
+			{
+				Json.Set("items", Write(*Value.Items));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, SetAppOfficialCommunityRequest& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			SetAppOfficialCommunityRequest Result;
+			if (const FJson* Value = Json.Find("communityId"))
+			{
+				if (!Read(*Value, Result.CommunityId, Error))
+				{
+					Error = "communityId: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const SetAppOfficialCommunityRequest& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.CommunityId)
+			{
+				Json.Set("communityId", Write(*Value.CommunityId));
+			}
+			return Json;
+		}
+
 		inline bool Read(const FJson& Json, SetAppReviewKeyRequest& Out, std::string& Error)
 		{
 			if (!Json.IsObject())
@@ -14803,6 +16033,36 @@ namespace Haiven
 			if (Value.RedemptionUrl)
 			{
 				Json.Set("redemptionUrl", Write(*Value.RedemptionUrl));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, SetRedirectURIsRequest& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			SetRedirectURIsRequest Result;
+			if (const FJson* Value = Json.Find("redirectUris"))
+			{
+				if (!Read(*Value, Result.RedirectUris, Error))
+				{
+					Error = "redirectUris: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const SetRedirectURIsRequest& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.RedirectUris)
+			{
+				Json.Set("redirectUris", Write(*Value.RedirectUris));
 			}
 			return Json;
 		}
@@ -15551,6 +16811,14 @@ namespace Haiven
 					return false;
 				}
 			}
+			if (const FJson* Value = Json.Find("unlisted"))
+			{
+				if (!Read(*Value, Result.Unlisted, Error))
+				{
+					Error = "unlisted: " + Error;
+					return false;
+				}
+			}
 			Out = std::move(Result);
 			return true;
 		}
@@ -15625,6 +16893,10 @@ namespace Haiven
 			if (Value.Tags)
 			{
 				Json.Set("tags", Write(*Value.Tags));
+			}
+			if (Value.Unlisted)
+			{
+				Json.Set("unlisted", Write(*Value.Unlisted));
 			}
 			return Json;
 		}
@@ -15707,6 +16979,14 @@ namespace Haiven
 					return false;
 				}
 			}
+			if (const FJson* Value = Json.Find("publicId"))
+			{
+				if (!Read(*Value, Result.PublicId, Error))
+				{
+					Error = "publicId: " + Error;
+					return false;
+				}
+			}
 			if (const FJson* Value = Json.Find("rating"))
 			{
 				if (!Read(*Value, Result.Rating, Error))
@@ -15769,6 +17049,10 @@ namespace Haiven
 			if (Value.Name)
 			{
 				Json.Set("name", Write(*Value.Name));
+			}
+			if (Value.PublicId)
+			{
+				Json.Set("publicId", Write(*Value.PublicId));
 			}
 			if (Value.Rating)
 			{
@@ -16247,6 +17531,36 @@ namespace Haiven
 			return Json;
 		}
 
+		inline bool Read(const FJson& Json, UnreadCount& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			UnreadCount Result;
+			if (const FJson* Value = Json.Find("count"))
+			{
+				if (!Read(*Value, Result.Count, Error))
+				{
+					Error = "count: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const UnreadCount& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.Count)
+			{
+				Json.Set("count", Write(*Value.Count));
+			}
+			return Json;
+		}
+
 		inline bool Read(const FJson& Json, UpdateAppRequest& Out, std::string& Error)
 		{
 			if (!Json.IsObject())
@@ -16401,6 +17715,14 @@ namespace Haiven
 					return false;
 				}
 			}
+			if (const FJson* Value = Json.Find("publicId"))
+			{
+				if (!Read(*Value, Result.PublicId, Error))
+				{
+					Error = "publicId: " + Error;
+					return false;
+				}
+			}
 			if (const FJson* Value = Json.Find("publishers"))
 			{
 				if (!Read(*Value, Result.Publishers, Error))
@@ -16463,6 +17785,10 @@ namespace Haiven
 			if (Value.Name)
 			{
 				Json.Set("name", Write(*Value.Name));
+			}
+			if (Value.PublicId)
+			{
+				Json.Set("publicId", Write(*Value.PublicId));
 			}
 			if (Value.Publishers)
 			{
@@ -16789,6 +18115,60 @@ namespace Haiven
 			if (Value.Type)
 			{
 				Json.Set("type", Write(*Value.Type));
+			}
+			return Json;
+		}
+
+		inline bool Read(const FJson& Json, UpdateRequest& Out, std::string& Error)
+		{
+			if (!Json.IsObject())
+			{
+				Error = "expected an object";
+				return false;
+			}
+			UpdateRequest Result;
+			if (const FJson* Value = Json.Find("locked"))
+			{
+				if (!Read(*Value, Result.Locked, Error))
+				{
+					Error = "locked: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("metadata"))
+			{
+				if (!Read(*Value, Result.Metadata, Error))
+				{
+					Error = "metadata: " + Error;
+					return false;
+				}
+			}
+			if (const FJson* Value = Json.Find("visibility"))
+			{
+				if (!Read(*Value, Result.Visibility, Error))
+				{
+					Error = "visibility: " + Error;
+					return false;
+				}
+			}
+			Out = std::move(Result);
+			return true;
+		}
+
+		inline FJson Write(const UpdateRequest& Value)
+		{
+			FJson Json = FJson::MakeObject();
+			if (Value.Locked)
+			{
+				Json.Set("locked", Write(*Value.Locked));
+			}
+			if (Value.Metadata)
+			{
+				Json.Set("metadata", Write(*Value.Metadata));
+			}
+			if (Value.Visibility)
+			{
+				Json.Set("visibility", Write(*Value.Visibility));
 			}
 			return Json;
 		}

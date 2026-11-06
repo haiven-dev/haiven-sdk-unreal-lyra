@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The payload a client sends on a chat.typing frame, reporting its own typing state.
 	struct WsChatTypingRequestV0
 	{
 		/// The channel the typing state applies to.

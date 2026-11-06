@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The signed manifest a client verifies before accepting a rotatable embedded policy bundle.
 	struct SafetyBundleManifestV1
 	{
 		/// Shared contract schema name.

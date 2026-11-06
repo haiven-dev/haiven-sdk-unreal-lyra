@@ -190,7 +190,18 @@ class ErrorCode {
 	static const ErrorCode kAlreadyOnWaitlist;
 	static const ErrorCode kInviteAlreadyRedeemed;
 	static const ErrorCode kEmailSendFailed;
+	static const ErrorCode kSteamAppNotFound;
+	static const ErrorCode kInvalidAppName;
 	static const ErrorCode kClientClosedRequest;
+	static const ErrorCode kSessionNotFound;
+	static const ErrorCode kSessionFull;
+	static const ErrorCode kSessionLocked;
+	static const ErrorCode kKickedFromSession;
+	static const ErrorCode kAlreadyInSession;
+	static const ErrorCode kConnectionNotBound;
+	static const ErrorCode kSessionUpdateRefused;
+	static const ErrorCode kGameAccessRequired;
+	static const ErrorCode kRelayUnavailable;
 
 	const std::string& value() const noexcept { return value_; }
 
@@ -382,7 +393,18 @@ inline const ErrorCode ErrorCode::kAgeGateNothingToRetry{"age_gate_nothing_to_re
 inline const ErrorCode ErrorCode::kAlreadyOnWaitlist{"already_on_waitlist"};
 inline const ErrorCode ErrorCode::kInviteAlreadyRedeemed{"invite_already_redeemed"};
 inline const ErrorCode ErrorCode::kEmailSendFailed{"email_send_failed"};
+inline const ErrorCode ErrorCode::kSteamAppNotFound{"steam_app_not_found"};
+inline const ErrorCode ErrorCode::kInvalidAppName{"invalid_app_name"};
 inline const ErrorCode ErrorCode::kClientClosedRequest{"client_closed_request"};
+inline const ErrorCode ErrorCode::kSessionNotFound{"session_not_found"};
+inline const ErrorCode ErrorCode::kSessionFull{"session_full"};
+inline const ErrorCode ErrorCode::kSessionLocked{"session_locked"};
+inline const ErrorCode ErrorCode::kKickedFromSession{"kicked_from_session"};
+inline const ErrorCode ErrorCode::kAlreadyInSession{"already_in_session"};
+inline const ErrorCode ErrorCode::kConnectionNotBound{"connection_not_bound"};
+inline const ErrorCode ErrorCode::kSessionUpdateRefused{"session_update_refused"};
+inline const ErrorCode ErrorCode::kGameAccessRequired{"game_access_required"};
+inline const ErrorCode ErrorCode::kRelayUnavailable{"relay_unavailable"};
 
 inline const std::unordered_set<std::string>& ErrorCode::registered() {
 	static const std::unordered_set<std::string> values = {
@@ -555,7 +577,18 @@ inline const std::unordered_set<std::string>& ErrorCode::registered() {
 		"already_on_waitlist",
 		"invite_already_redeemed",
 		"email_send_failed",
+		"steam_app_not_found",
+		"invalid_app_name",
 		"client_closed_request",
+		"session_not_found",
+		"session_full",
+		"session_locked",
+		"kicked_from_session",
+		"already_in_session",
+		"connection_not_bound",
+		"session_update_refused",
+		"game_access_required",
+		"relay_unavailable",
 	};
 	return values;
 }

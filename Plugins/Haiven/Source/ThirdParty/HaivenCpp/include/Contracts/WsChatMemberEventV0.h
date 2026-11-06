@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The payload of a chat community membership change.
 	struct WsChatMemberEventV0
 	{
 		/// The community whose membership changed.
