@@ -7,10 +7,10 @@
 
 namespace HaivenLyraEntitlements
 {
-	/** The entitlement kind that maps to an inventory item (haiven-api KindItem). */
+	/** The entitlement kind that maps to an inventory item (the game service KindItem). */
 	inline const TCHAR* ItemKind = TEXT("item");
 
-	/** The only state the account API returns for a held benefit (haiven-api StateActive). */
+	/** The only state the account API returns for a held benefit (the game service StateActive). */
 	inline const TCHAR* ActiveState = TEXT("active");
 
 	/** Active item entitlement codes in response order and without duplicates. */
