@@ -117,6 +117,9 @@ private:
 	void HandleRewardsHandleClicked();
 
 	UFUNCTION()
+	void HandlePlayHandleClicked();
+
+	UFUNCTION()
 	void HandleChatCloseClicked();
 
 	UFUNCTION()
@@ -139,6 +142,9 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UButton> RewardsHandle;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UButton> PlayHandle;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UTextBlock> RewardsHandleLabel;

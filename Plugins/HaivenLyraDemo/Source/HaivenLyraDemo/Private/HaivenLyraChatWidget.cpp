@@ -137,6 +137,18 @@ TSharedRef<SWidget> UHaivenLyraChatWidget::RebuildWidget()
 			Slot->SetSize(FVector2D(160.0f, 52.0f));
 		}
 
+		UTextBlock* PlayHandleLabel = nullptr;
+		USizeBox* PlayHandleFrame = FramedButton(
+			WidgetTree, TEXT("PlayHandleFrame"), PlayHandle, TEXT("PlayHandle"), PlayHandleLabel,
+			TEXT("PlayHandleLabel"), NSLOCTEXT("HaivenLyraDemo", "PlayHandle", "PLAY"), FVector2D(160.0f, 52.0f), true);
+		if (UCanvasPanelSlot* Slot = HandleLayer->AddChildToCanvas(PlayHandleFrame))
+		{
+			Slot->SetAnchors(FAnchors(0.0f, 0.0f));
+			Slot->SetAlignment(FVector2D(0.0f, 0.0f));
+			Slot->SetPosition(FVector2D(24.0f, 96.0f));
+			Slot->SetSize(FVector2D(160.0f, 52.0f));
+		}
+
 		ChatDrawer = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("ChatDrawer"));
 		ChatDrawer->SetBrushColor(Navy);
 		ChatDrawer->SetPadding(FMargin(16.0f));
@@ -308,6 +320,7 @@ TSharedRef<SWidget> UHaivenLyraChatWidget::RebuildWidget()
 	if (SignIn) SignIn->OnClicked.AddUniqueDynamic(this, &UHaivenLyraChatWidget::HandleSignInClicked);
 	if (ChatHandle) ChatHandle->OnClicked.AddUniqueDynamic(this, &UHaivenLyraChatWidget::HandleChatHandleClicked);
 	if (RewardsHandle) RewardsHandle->OnClicked.AddUniqueDynamic(this, &UHaivenLyraChatWidget::HandleRewardsHandleClicked);
+	if (PlayHandle) PlayHandle->OnClicked.AddUniqueDynamic(this, &UHaivenLyraChatWidget::HandlePlayHandleClicked);
 	if (ChatClose) ChatClose->OnClicked.AddUniqueDynamic(this, &UHaivenLyraChatWidget::HandleChatCloseClicked);
 	if (RewardsClose) RewardsClose->OnClicked.AddUniqueDynamic(this, &UHaivenLyraChatWidget::HandleRewardsCloseClicked);
 	if (Status) Status->SetText(DisplayedStatus);
@@ -470,6 +483,16 @@ void UHaivenLyraChatWidget::CollapseDrawers()
 {
 	if (ChatDrawer) ChatDrawer->SetVisibility(ESlateVisibility::Collapsed);
 	if (RewardsDrawer) RewardsDrawer->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UHaivenLyraChatWidget::HandlePlayHandleClicked()
+{
+	CollapseDrawers();
+	ULocalPlayer* Player = GetOwningLocalPlayer();
+	if (UHaivenLyraDemoSubsystem* Demo = Player ? Player->GetSubsystem<UHaivenLyraDemoSubsystem>() : nullptr)
+	{
+		Demo->RequestPlayGameplay();
+	}
 }
 
 void UHaivenLyraChatWidget::HandleChatHandleClicked()

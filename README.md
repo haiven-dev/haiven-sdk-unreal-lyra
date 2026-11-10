@@ -39,3 +39,11 @@ Haiven changes in this repository are the plugins
 Review those as GitHub pull requests. `.github/workflows/build.yml` checks the
 three descriptors on pull requests and on a `v*` tag. It does not cook Lyra;
 that still needs the Marketplace content and an Unreal install.
+
+## Playing
+
+Press Play on the front end, then press **PLAY** on the left. That hosts Lyra's
+default experience as a local match, without an Epic lobby, so the shooter can
+be played the way Boss Room can be played after Host. Chat and rewards stay on
+edge handles and do not take the mouse. Without the Fab content, PLAY reports
+that no gameplay experience is loaded.

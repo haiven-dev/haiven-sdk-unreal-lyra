@@ -586,6 +586,17 @@ void UHaivenLyraDemoSubsystem::Send(const FString& Content)
 	ReleaseChat();
 }
 
+void UHaivenLyraDemoSubsystem::RequestPlayGameplay()
+{
+	CollapseMainPanels();
+	if (!OnPlayGameplayRequested.IsBound())
+	{
+		Note(NSLOCTEXT("HaivenLyraDemo", "PlayUnavailable", "PLAY needs the Lyra inventory plugin to start a match."));
+		return;
+	}
+	OnPlayGameplayRequested.Broadcast();
+}
+
 bool UHaivenLyraDemoSubsystem::FocusChat()
 {
 	APlayerController* Controller = GetLocalPlayer() ? GetLocalPlayer()->GetPlayerController(nullptr) : nullptr;

@@ -31,6 +31,10 @@ private:
 	UFUNCTION()
 	void HandleItemEntitled(const FString& Code);
 
+	/** PLAY: host the default experience offline so this player enters the match. */
+	UFUNCTION()
+	void PlayGameplay();
+
 	UHaivenLyraInventoryBridge* FindBridge() const;
 
 	TArray<FString> Pending;

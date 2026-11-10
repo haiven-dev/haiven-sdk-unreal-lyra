@@ -148,6 +148,7 @@ bool FHaivenLyraDemoPanelTest::RunTest(const FString& Parameters)
 		Panel->WidgetTree->FindWidget(TEXT("HaivenDialogLayer")));
 	TestNotNull(TEXT("chat has a stable named handle"), Panel->WidgetTree->FindWidget(TEXT("ChatHandle")));
 	TestNotNull(TEXT("rewards have a stable named handle"), Panel->WidgetTree->FindWidget(TEXT("RewardsHandle")));
+	TestNotNull(TEXT("play has a stable named handle"), Panel->WidgetTree->FindWidget(TEXT("PlayHandle")));
 	UBorder* ChatDrawer = Cast<UBorder>(Panel->WidgetTree->FindWidget(TEXT("ChatDrawer")));
 	UBorder* RewardsDrawer = Cast<UBorder>(Panel->WidgetTree->FindWidget(TEXT("RewardsDrawer")));
 	if (TestNotNull(TEXT("chat drawer"), ChatDrawer))
@@ -164,6 +165,17 @@ bool FHaivenLyraDemoPanelTest::RunTest(const FString& Parameters)
 	USizeBox* ChatHandleFrame = Cast<USizeBox>(Panel->WidgetTree->FindWidget(TEXT("ChatHandleFrame")));
 	if (TestNotNull(TEXT("chat handle frame"), ChatHandleFrame))
 		TestTrue(TEXT("chat handle exceeds the 44px minimum control height"), ChatHandleFrame->GetHeightOverride() >= 44.0f);
+	USizeBox* PlayHandleFrame = Cast<USizeBox>(Panel->WidgetTree->FindWidget(TEXT("PlayHandleFrame")));
+	if (TestNotNull(TEXT("play handle frame"), PlayHandleFrame))
+		TestTrue(TEXT("play handle exceeds the 44px minimum control height"), PlayHandleFrame->GetHeightOverride() >= 44.0f);
+	UButton* PlayHandle = Cast<UButton>(Panel->WidgetTree->FindWidget(TEXT("PlayHandle")));
+	if (TestNotNull(TEXT("play handle button"), PlayHandle) && ChatDrawer && RewardsDrawer)
+	{
+		if (ChatHandle) ChatHandle->OnClicked.Broadcast();
+		PlayHandle->OnClicked.Broadcast();
+		TestEqual(TEXT("play closes the chat drawer so the match can take input"), ChatDrawer->GetVisibility(), ESlateVisibility::Collapsed);
+		TestEqual(TEXT("play leaves the rewards drawer collapsed"), RewardsDrawer->GetVisibility(), ESlateVisibility::Collapsed);
+	}
 
 	UScrollBox* Log = Panel->WidgetTree ? Cast<UScrollBox>(Panel->WidgetTree->FindWidget(TEXT("Log"))) : nullptr;
 	if (!TestNotNull(TEXT("the code-built tree has a log"), Log)) return false;

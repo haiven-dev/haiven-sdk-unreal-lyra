@@ -1,6 +1,7 @@
 // Wires the Haiven plugin to the demo HUD for one local player: Sign in with
 // Haiven, account, message of the day, moderated chat, a subscriber reward
-// claim, and the item entitlements the inventory plugin turns into Lyra items.
+// claim, the item entitlements the inventory plugin turns into Lyra items,
+// and PLAY, which asks that plugin to start a local match.
 //
 // Everything here goes through the Haiven plugin's public API: the
 // UHaivenSubsystem for configuration, the connection and chat sends,
@@ -51,6 +52,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenLyraItemEntitled, const FStri
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenLyraMotdActionRequested, const FString&, HttpsUrl);
 /** The player, connection, moderation or reward status changed. */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FHaivenLyraStatusChanged);
+/** PLAY was pressed. The inventory plugin hosts the default experience offline. */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FHaivenLyraPlayRequested);
 
 /** Where this player is in signing in to Haiven. */
 UENUM(BlueprintType)
@@ -129,6 +132,14 @@ public:
 	/** Moves keyboard focus to the chat input, as Enter does during play. False when there is no panel. */
 	UFUNCTION(BlueprintCallable, Category = "Haiven|Lyra Demo|Chat")
 	bool FocusChat();
+
+	/**
+	 * Leaves the front end for Lyra's default experience as a local match.
+	 * Collapses the Haiven drawers first so they do not take the mouse.
+	 * Without the inventory plugin, the panel says PLAY cannot start a match.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Lyra Demo|Gameplay", meta = (DisplayName = "Play Gameplay"))
+	void RequestPlayGameplay();
 
 	/** Returns keyboard focus to the game after a message is sent. */
 	UFUNCTION(BlueprintCallable, Category = "Haiven|Lyra Demo|Chat")
@@ -217,6 +228,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Haiven|Lyra Demo|MOTD")
 	FHaivenLyraMotdActionRequested OnMotdActionRequested;
+
+	/** Fires when PLAY is pressed, before the inventory plugin hosts the match. */
+	UPROPERTY(BlueprintAssignable, Category = "Haiven|Lyra Demo|Gameplay")
+	FHaivenLyraPlayRequested OnPlayGameplayRequested;
 
 private:
 	friend class FHaivenLyraDemoSignInTest;
