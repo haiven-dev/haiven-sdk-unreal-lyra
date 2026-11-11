@@ -81,6 +81,8 @@ jobs:
             echo "only for a squash: a merge commit or a rebase leaves every promotion"
             echo "commit on main associated with this pull request, and release-please"
             echo "repeats the override for each of them."
+            echo "Each nested commit keeps its subject and any BREAKING CHANGE:,"
+            echo "BREAKING-CHANGE:, or Release-As: line. Other body text is omitted."
             echo
             echo "- sdk-dev: \`$sdk_dev_sha\`"
             echo "- main at dispatch: \`$main_sha\`"
@@ -92,9 +94,25 @@ jobs:
             echo "the tag and GitHub release."
             echo
             echo "BEGIN_COMMIT_OVERRIDE"
-            git log --reverse --no-merges \
-              --format='BEGIN_NESTED_COMMIT%n%B%nEND_NESTED_COMMIT' \
-              origin/main..origin/sdk-dev
+            # Raw %B does not fit the pull request body limit. git trailers
+            # drop "BREAKING CHANGE" because of the space, so keep the
+            # subject and any breaking or Release-As line ourselves.
+            # Merge commits are omitted: release-please would parse their
+            # bodies as extra nested commits.
+            commit_shas="$(git rev-list --reverse --no-merges origin/main..origin/sdk-dev)"
+            while IFS= read -r commit_sha; do
+              [[ -z "$commit_sha" ]] && continue
+              subject="$(git log -1 --format='%s' "$commit_sha")"
+              commit_body="$(git log -1 --format='%b' "$commit_sha")"
+              footers="$(printf '%s\n' "$commit_body" | grep -E '^(BREAKING CHANGE:|BREAKING-CHANGE:|Release-As:)' || true)"
+              echo "BEGIN_NESTED_COMMIT"
+              printf '%s\n' "$subject"
+              if [[ -n "$footers" ]]; then
+                echo
+                printf '%s\n' "$footers"
+              fi
+              echo "END_NESTED_COMMIT"
+            done <<< "$commit_shas"
             echo "END_COMMIT_OVERRIDE"
             echo
             echo "After the release PR merges, reset sdk-dev to main with a force-with-lease"
