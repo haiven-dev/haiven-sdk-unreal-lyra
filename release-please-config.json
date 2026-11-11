@@ -12,7 +12,24 @@
     ".": {
       "package-name": "haiven-sdk-unreal-lyra",
       "initial-version": "0.0.1",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "Plugins/Haiven/Haiven.uplugin",
+          "jsonpath": "$.VersionName"
+        },
+        {
+          "type": "json",
+          "path": "Plugins/HaivenLyraDemo/HaivenLyraDemo.uplugin",
+          "jsonpath": "$.VersionName"
+        },
+        {
+          "type": "json",
+          "path": "Plugins/HaivenLyraInventory/HaivenLyraInventory.uplugin",
+          "jsonpath": "$.VersionName"
+        }
+      ]
     }
   }
 }
