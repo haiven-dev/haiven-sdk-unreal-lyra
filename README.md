@@ -14,4 +14,17 @@ Once installed, copy the "Content" folder and any other folders named "Content" 
 
 Additional Information
 ----
-See the [Unreal Engine README](../../../README.md) at the root of the repository for [Licensing](../../../README.md#licensing) and [Contributing](../../../README.md#contributions) information.
+## Licensing and contributing
+
+Lyra's Marketplace content is not in this git checkout, and there is no
+`../../../README.md` here. The Epic sample is covered by the Unreal Engine
+license that came with that Marketplace download. See the
+[Lyra sample documentation](https://docs.unrealengine.com/5.0/en-US/lyra-sample-game-in-unreal-engine/).
+
+Haiven changes in this repository are the plugins
+[Haiven](Plugins/Haiven/Haiven.uplugin),
+[HaivenLyraDemo](Plugins/HaivenLyraDemo/HaivenLyraDemo.uplugin), and
+[HaivenLyraInventory](Plugins/HaivenLyraInventory/HaivenLyraInventory.uplugin).
+Review those as GitHub pull requests. `.github/workflows/build.yml` checks the
+three descriptors on pull requests and on a `v*` tag. It does not cook Lyra;
+that still needs the Marketplace content and an Unreal install.
