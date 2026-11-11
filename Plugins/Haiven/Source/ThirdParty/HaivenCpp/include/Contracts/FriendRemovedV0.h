@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A friendship or pending friend request the other user deleted.
 	struct FriendRemovedV0
 	{
 		/// The stable identifier of this value.

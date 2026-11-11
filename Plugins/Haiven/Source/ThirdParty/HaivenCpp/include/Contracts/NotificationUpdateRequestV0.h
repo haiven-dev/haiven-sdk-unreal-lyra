@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A request to update a notification's visible fields.
 	struct NotificationUpdateRequestV0
 	{
 		/// The stable identifier of this value.

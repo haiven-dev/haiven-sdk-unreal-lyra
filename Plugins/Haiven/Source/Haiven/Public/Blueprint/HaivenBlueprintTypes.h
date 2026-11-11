@@ -188,7 +188,18 @@ enum class EHaivenErrorCode : uint8
 	AlreadyOnWaitlist UMETA(DisplayName = "already_on_waitlist"),
 	InviteAlreadyRedeemed UMETA(DisplayName = "invite_already_redeemed"),
 	EmailSendFailed UMETA(DisplayName = "email_send_failed"),
+	SteamAppNotFound UMETA(DisplayName = "steam_app_not_found"),
+	InvalidAppName UMETA(DisplayName = "invalid_app_name"),
 	ClientClosedRequest UMETA(DisplayName = "client_closed_request"),
+	SessionNotFound UMETA(DisplayName = "session_not_found"),
+	SessionFull UMETA(DisplayName = "session_full"),
+	SessionLocked UMETA(DisplayName = "session_locked"),
+	KickedFromSession UMETA(DisplayName = "kicked_from_session"),
+	AlreadyInSession UMETA(DisplayName = "already_in_session"),
+	ConnectionNotBound UMETA(DisplayName = "connection_not_bound"),
+	SessionUpdateRefused UMETA(DisplayName = "session_update_refused"),
+	GameAccessRequired UMETA(DisplayName = "game_access_required"),
+	RelayUnavailable UMETA(DisplayName = "relay_unavailable"),
 };
 
 /** The MessageType vocabulary as an enum to switch on. A projection only: the
@@ -238,6 +249,16 @@ enum class EHaivenMessageType : uint8
 	AgegateUpdated UMETA(DisplayName = "agegate.updated"),
 	EntitlementsUpdated UMETA(DisplayName = "entitlements.updated"),
 	Motd UMETA(DisplayName = "motd"),
+	SessionResume UMETA(DisplayName = "session.resume"),
+	SessionPeerConnected UMETA(DisplayName = "session.peer.connected"),
+	SessionMemberJoined UMETA(DisplayName = "session.member.joined"),
+	SessionMemberLeft UMETA(DisplayName = "session.member.left"),
+	SessionUpdated UMETA(DisplayName = "session.updated"),
+	SessionClosed UMETA(DisplayName = "session.closed"),
+	P2pSignal UMETA(DisplayName = "p2p.signal"),
+	P2pSignalReceived UMETA(DisplayName = "p2p.signal.received"),
+	P2pSignalAck UMETA(DisplayName = "p2p.signal.ack"),
+	P2pIceServers UMETA(DisplayName = "p2p.ice.servers"),
 };
 
 /** The WsErrorCode vocabulary as an enum to switch on. A projection only: the
@@ -311,6 +332,9 @@ enum class EHaivenWsErrorCode : uint8
 	ChildLiteAccessAvailable UMETA(DisplayName = "child_lite_access_available"),
 	ParentalConsentDenied UMETA(DisplayName = "parental_consent_denied"),
 	ClientClosedRequest UMETA(DisplayName = "client_closed_request"),
+	SessionNotFound UMETA(DisplayName = "session_not_found"),
+	PeerNotInSession UMETA(DisplayName = "peer_not_in_session"),
+	RelayUnavailable UMETA(DisplayName = "relay_unavailable"),
 };
 
 USTRUCT(BlueprintType)
@@ -1306,6 +1330,158 @@ struct HAIVEN_API FHaivenNotificationV0
 };
 
 USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenP2pIceServersReplyV0IceServersItem
+{
+	GENERATED_BODY()
+
+	/** STUN and TURN URLs of one server. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	TArray<FString> Urls;
+
+	/** Whether Username is present. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	bool bHasUsername = false;
+
+	/** The TURN username: absent for STUN. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString Username;
+
+	/** Whether Credential is present. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	bool bHasCredential = false;
+
+	/** The TURN password: absent for STUN. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString Credential;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenP2pIceServersReplyV0
+{
+	GENERATED_BODY()
+
+	/** Whether direct candidates are allowed: auto allows them and relay-only does not. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString RelayPolicy;
+
+	/** Whether ExpiresAt is present. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	bool bHasExpiresAt = false;
+
+	/** The time at which this value expires. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString ExpiresAt;
+
+	/** Whether RefreshAfter is present. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	bool bHasRefreshAfter = false;
+
+	/** When to fetch new credentials: null with STUN only. Raw JSON text. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString RefreshAfter;
+
+	/** Servers to pass to RTCPeerConnection. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	TArray<FHaivenP2pIceServersReplyV0IceServersItem> IceServers;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenP2pSignalAckEventV0
+{
+	GENERATED_BODY()
+
+	/** The session both members belong to. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString SessionId;
+
+	/** The member that acknowledged as the server authenticated it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString FromUserId;
+
+	/** The attempt of the acknowledged message. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString AttemptId;
+
+	/** The sequence number of the acknowledged message. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	int64 Seq = 0;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenP2pSignalAckV0
+{
+	GENERATED_BODY()
+
+	/** The session both members belong to. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString SessionId;
+
+	/** The original sender of the acknowledged message. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString ToUserId;
+
+	/** The attempt of the acknowledged message. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString AttemptId;
+
+	/** The sequence number of the acknowledged message. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	int64 Seq = 0;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenP2pSignalReceivedV0
+{
+	GENERATED_BODY()
+
+	/** The session both members belong to. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString SessionId;
+
+	/** The sender as the server authenticated it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString FromUserId;
+
+	/** The sender's connection attempt. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString AttemptId;
+
+	/** The sender's sequence number within the attempt. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	int64 Seq = 0;
+
+	/** The sender's opaque signaling data. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString Data;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenP2pSignalV0
+{
+	GENERATED_BODY()
+
+	/** The session both members belong to. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString SessionId;
+
+	/** The member to deliver the message to. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString ToUserId;
+
+	/** One connection attempt including an ICE restart. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString AttemptId;
+
+	/** Rises from 1 within the attempt. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	int64 Seq = 0;
+
+	/** Opaque to the server: at most 4096 bytes. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString Data;
+};
+
+USTRUCT(BlueprintType)
 struct HAIVEN_API FHaivenPresenceV0Status
 {
 	GENERATED_BODY()
@@ -1419,6 +1595,140 @@ struct HAIVEN_API FHaivenSafetyBundleManifestV1
 	/** Ed25519 signature over the canonical manifest without this property, as base64. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
 	FString Signature;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenSessionClosedV0
+{
+	GENERATED_BODY()
+
+	/** The session. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString SessionId;
+
+	/** The end reason of the host's participation that closed the session. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString Reason;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenSessionMemberJoinedV0
+{
+	GENERATED_BODY()
+
+	/** The session. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString SessionId;
+
+	/** The member. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString UserId;
+
+	/** The member's participation. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString ParticipationId;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenSessionMemberLeftV0
+{
+	GENERATED_BODY()
+
+	/** The session. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString SessionId;
+
+	/** The member whose participation ended. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString UserId;
+
+	/** The participation that ended. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString ParticipationId;
+
+	/** Why the participation ended. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString Reason;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenSessionPeerConnectedV0
+{
+	GENERATED_BODY()
+
+	/** The session the guest belongs to. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString SessionId;
+
+	/** The guest whose data channel opened. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString UserId;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenSessionResumeReplyV0
+{
+	GENERATED_BODY()
+
+	/** The resumed participation. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString ParticipationId;
+
+	/** The server-generated WebSocket connection identifier. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString ConnectionId;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenSessionResumeRequestV0
+{
+	GENERATED_BODY()
+
+	/** The participation to resume. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString ParticipationId;
+
+	/** The socket the participation was bound to before the drop. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString PreviousConnectionId;
+
+	/** The resume token sent with the create or join that admitted the participation. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString ResumeToken;
+};
+
+USTRUCT(BlueprintType)
+struct HAIVEN_API FHaivenSessionUpdatedV0
+{
+	GENERATED_BODY()
+
+	/** The session. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString SessionId;
+
+	/** Whether the session takes joins: open does and locked does not. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString State;
+
+	/** Who may find and join the session. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString Visibility;
+
+	/** The most members the session holds. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	int64 MaxMembers = 0;
+
+	/** Whether JoinCode is present. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	bool bHasJoinCode = false;
+
+	/** The six-character code of a private session: null otherwise. Raw JSON text. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString JoinCode;
+
+	/** The game's own key and value pairs. Raw JSON text. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Haiven|Contracts")
+	FString Metadata;
 };
 
 USTRUCT(BlueprintType)

@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A request to submit a chat message.
 	struct ChatSendRequestV0
 	{
 		/// The chat channel identifier.

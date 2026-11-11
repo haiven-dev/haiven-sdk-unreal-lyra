@@ -43,6 +43,15 @@ enum class EHaivenRewardConfirmation : uint8
 	Unrecognized,
 };
 
+/** A saved claim ready to post on POST /users/me/rewards/claims. Not a recorded claim. */
+struct HAIVEN_API FHaivenSavedClaimSubmission
+{
+	FString IntegrationId;
+	FString RewardRef;
+	FString ClaimId;
+	FHaivenRestRequest Request;
+};
+
 /** One finished reward claim (Haiven::FRewardClaimOutcome). */
 USTRUCT(BlueprintType)
 struct HAIVEN_API FHaivenRewardClaimOutcome
@@ -82,8 +91,7 @@ struct HAIVEN_API FHaivenRewardClaimOutcome
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenRewardClaimed, const FHaivenRewardClaimOutcome&, Outcome);
 
 /**
- * The engine-side half of the plugin's subscriber-reward claims (HAVN-1179 /
- * HAVN-1180): owns the C++ SDK's Haiven::FRewardClaims, which keeps the claim
+ * The engine-side half of the plugin's subscriber-reward claims: owns the C++ SDK's Haiven::FRewardClaims, which keeps the claim
  * id of every unanswered claim so a retry is the same claim to the service,
  * and presents its outcomes in Blueprint types. UHaivenSubsystem owns one; it
  * is public so a game (and the automation tests) can drive one over its own
@@ -122,7 +130,26 @@ public:
 	/** The claim id the next claim of this reward will carry, if one is pending. */
 	bool GetPendingClaimId(const FString& IntegrationId, const FString& RewardRef, FString& OutClaimId) const;
 
-	/** Forgets every pending claim id: the player signed out. */
+	/**
+	 * Records a claim before the player links. Reuses a saved or pending claim
+	 * id and does not build a request. False when the integration id or reward
+	 * ref is not acceptable. Not a recorded claim: do not grant loot.
+	 */
+	bool SaveClaim(const FString& IntegrationId, const FString& RewardRef, FString& OutClaimId, FString& OutError);
+
+	/** The claim id that will be submitted for this reward after linking, if one was saved. */
+	bool GetSavedClaimId(const FString& IntegrationId, const FString& RewardRef, FString& OutClaimId) const;
+
+	/**
+	 * Remembers ExportSaved in this file and reloads it. Empty when no file has
+	 * been chosen. The file holds claim ids, not credentials.
+	 */
+	void UseSavedClaimsFile(const FString& Path);
+
+	/** One user-claim request per saved intent, under the id SaveClaim kept. */
+	void CollectSavedSubmissions(TArray<FHaivenSavedClaimSubmission>& Out);
+
+	/** Forgets every pending claim id: the player signed out. Saved intents stay. */
 	void Clear();
 
 	static FHaivenRewardClaimOutcome ToBlueprint(const Haiven::FRewardClaimOutcome& Outcome);
@@ -130,7 +157,10 @@ public:
 	static EHaivenRewardConfirmation ToBlueprint(Haiven::ERewardConfirmation Confirmation);
 
 private:
+	void PersistSavedIfChanged(const std::string& Before);
+
 	Haiven::FRewardClaims Core;
+	FString SavedClaimsFile;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenClaimRewardOutput, const FHaivenRewardClaimOutcome&, Outcome);

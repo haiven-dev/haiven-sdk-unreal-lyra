@@ -21,6 +21,7 @@ namespace Haiven
 		std::string Version;
 	};
 
+	/// The payload a client sends on an auth frame, re-authenticating an open socket.
 	struct WsAuthRequestV0
 	{
 		/// The replacement bearer token; it must resolve to the same identity the socket already authenticated with.

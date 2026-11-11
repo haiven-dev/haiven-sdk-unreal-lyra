@@ -1,7 +1,8 @@
 // The client half of the entitlement grant: listens for the demo's
 // OnItemEntitled and forwards each code to the server through this player's
 // UHaivenLyraInventoryBridge. Codes that arrive before the bridge has
-// replicated wait until it begins play.
+// replicated wait until it begins play. A replacement controller also replays
+// the current active projection so travel cannot lose an earlier entitlement.
 
 #pragma once
 

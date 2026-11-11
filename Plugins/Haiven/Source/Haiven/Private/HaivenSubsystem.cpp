@@ -9,6 +9,7 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "HAL/PlatformProcess.h"
+#include "Misc/Paths.h"
 #include "Vocabulary/MessageType.h"
 
 #define UI UI_ST
@@ -46,6 +47,7 @@ void UHaivenSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Handoff = MakeUnique<Haiven::FHandoffCore>();
 	ResetChat();
 	Rewards = MakeUnique<FHaivenRewards>();
+	Rewards->UseSavedClaimsFile(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Haiven"), TEXT("reward-claims.json")));
 	ResetIdentity();
 }
 
@@ -54,7 +56,13 @@ void UHaivenSubsystem::Deinitialize()
 	HostAccessToken.Reset();
 	HostAccessTokenExpiry = FDateTime();
 	RecentRealtimeFrames.Reset();
-	if (Handoff) Handoff->ClearCredential();
+	if (Handoff)
+	{
+		// Shutting down is not signing out: detach the store so the saved
+		// credential survives for the next launch.
+		Handoff->SetCredentialStore(nullptr);
+		Handoff->ClearCredential();
+	}
 	InvalidateCredentialBoundary();
 	ShutdownNetworking();
 	StopLoopbackReceiver();
@@ -288,6 +296,21 @@ void UHaivenSubsystem::Logout()
 	InvalidateCredentialBoundary();
 }
 
+void UHaivenSubsystem::SetCredentialStore(TSharedPtr<Haiven::IHandoffCredentialStore> Store)
+{
+	check(IsInGameThread());
+	if (Handoff) Handoff->SetCredentialStore(MoveTemp(Store));
+}
+
+bool UHaivenSubsystem::ResumeGameLogin()
+{
+	check(IsInGameThread());
+	Haiven::FHandoffCredential Credential;
+	if (!Handoff || !Handoff->Resume(FDateTime::UtcNow(), Credential)) return false;
+	ActivateGameCredential(Credential);
+	return true;
+}
+
 void UHaivenSubsystem::RegisterAnalytics(const TSharedRef<FHaivenAnalytics, ESPMode::ThreadSafe>& Instance)
 {
 	check(IsInGameThread());
@@ -319,9 +342,87 @@ void UHaivenSubsystem::InvalidateCredentialBoundary()
 	for (FHaivenHttpComplete& Completion : CancelledHttp) Completion.ExecuteIfBound(Cancelled);
 }
 
+void UHaivenSubsystem::ClearRejectedCredential()
+{
+	check(IsInGameThread());
+	HostAccessToken.Reset();
+	HostAccessTokenExpiry = FDateTime();
+	if (Handoff) Handoff->ClearCredential();
+	InvalidateCredentialBoundary();
+}
+
 bool UHaivenSubsystem::GetPendingRewardClaimId(const FString& IntegrationId, const FString& RewardRef, FString& ClaimId) const
 {
 	return Rewards && Rewards->GetPendingClaimId(IntegrationId, RewardRef, ClaimId);
+}
+
+bool UHaivenSubsystem::SaveRewardClaim(const FString& IntegrationId, const FString& RewardRef, FString& ClaimId, FString& Error)
+{
+	if (!Rewards)
+	{
+		Error = TEXT("The Haiven subsystem is unavailable.");
+		return false;
+	}
+	return Rewards->SaveClaim(IntegrationId, RewardRef, ClaimId, Error);
+}
+
+bool UHaivenSubsystem::GetSavedRewardClaimId(const FString& IntegrationId, const FString& RewardRef, FString& ClaimId) const
+{
+	return Rewards && Rewards->GetSavedClaimId(IntegrationId, RewardRef, ClaimId);
+}
+
+void UHaivenSubsystem::SubmitSavedRewardClaims()
+{
+	if (!Rewards) return;
+	TArray<FHaivenSavedClaimSubmission> Submissions;
+	Rewards->CollectSavedSubmissions(Submissions);
+	const uint64 Session = Rewards->GetSessionGeneration();
+	for (const FHaivenSavedClaimSubmission& Submission : Submissions)
+	{
+		TWeakObjectPtr<UHaivenSubsystem> WeakThis(this);
+		const FString Integration = Submission.IntegrationId;
+		const FString Reward = Submission.RewardRef;
+		const FString ClaimId = Submission.ClaimId;
+		Request(
+			Submission.Request.Method,
+			Submission.Request.Path,
+			Submission.Request.Body,
+			FHaivenHttpComplete::CreateLambda(
+				[WeakThis, Session, Integration, Reward, ClaimId](const FHaivenHttpResult& Result)
+				{
+					if (!WeakThis.IsValid()) return;
+					WeakThis->FinishSavedRewardClaim(Session, Integration, Reward, ClaimId, Result);
+				}));
+	}
+}
+
+void UHaivenSubsystem::FinishSavedRewardClaim(
+	uint64 Session,
+	const FString& IntegrationId,
+	const FString& RewardRef,
+	const FString& ClaimId,
+	const FHaivenHttpResult& Result)
+{
+	if (!IsInGameThread())
+	{
+		TWeakObjectPtr<UHaivenSubsystem> WeakThis(this);
+		AsyncTask(ENamedThreads::GameThread, [WeakThis, Session, IntegrationId, RewardRef, ClaimId, Result]()
+		{
+			if (WeakThis.IsValid()) WeakThis->FinishSavedRewardClaim(Session, IntegrationId, RewardRef, ClaimId, Result);
+		});
+		return;
+	}
+	FHaivenRewards* Current = Rewards.Get();
+	if (!Current || Session != Current->GetSessionGeneration()) return;
+	const TOptional<FHaivenRewardClaimOutcome> Outcome = Current->HandleClaimReply(Session, IntegrationId, RewardRef, ClaimId, Result);
+	if (!Outcome.IsSet()) return;
+	// A refusal is not loot. Recorded results are also announced on OnRewardClaimed.
+	OnRewardClaimSettled.Broadcast(Outcome.GetValue());
+	if (Outcome.GetValue().Result == EHaivenRewardClaimResult::Claimed
+		|| Outcome.GetValue().Result == EHaivenRewardClaimResult::AlreadyRecorded)
+	{
+		OnRewardClaimed.Broadcast(Outcome.GetValue());
+	}
 }
 
 bool UHaivenSubsystem::GetAccessToken(FString& AccessToken) const
@@ -359,17 +460,32 @@ void UHaivenSubsystem::FinishExchange(bool bTransportSucceeded, int32 StatusCode
 		BroadcastFailureOnGameThread(Error);
 		return;
 	}
-	// A successful handoff is a credential replacement boundary. Make its
-	// credential active and invalidate every cache/read owned by the prior user.
+	ActivateGameCredential(Credential);
+}
+
+void UHaivenSubsystem::ActivateGameCredential(const Haiven::FHandoffCredential& Credential)
+{
+	// A new or resumed credential is a credential replacement boundary. Make it
+	// active and invalidate every cache/read owned by the prior user.
 	HostAccessToken.Reset();
-	HostAccessTokenExpiry = Credential.ExpiresAt;
+	// FDateTime::MaxValue() stands for "no fixed expiry", as in FHaivenGameCredential.
+	HostAccessTokenExpiry = Credential.bHasExpiry ? Credential.ExpiresAt : FDateTime::MaxValue();
 	InvalidateCredentialBoundary();
+	SubmitSavedRewardClaims();
 
 	FHaivenGameCredential BlueprintCredential;
 	BlueprintCredential.AccessToken = Credential.AccessToken;
 	BlueprintCredential.TokenType = Credential.TokenType;
-	BlueprintCredential.ExpiresAtUtc = Credential.ExpiresAt;
-	UE_LOG(LogHaiven, Log, TEXT("Game login completed; the credential expires at %s UTC."), *Credential.ExpiresAt.ToIso8601());
+	BlueprintCredential.bHasExpiry = Credential.bHasExpiry;
+	BlueprintCredential.ExpiresAtUtc = HostAccessTokenExpiry;
+	if (Credential.bHasExpiry)
+	{
+		UE_LOG(LogHaiven, Log, TEXT("Game login completed; the credential expires at %s UTC."), *Credential.ExpiresAt.ToIso8601());
+	}
+	else
+	{
+		UE_LOG(LogHaiven, Log, TEXT("Game login completed; the credential lasts until it is revoked."));
+	}
 	OnGameLoginCompleted.Broadcast(BlueprintCredential);
 }
 

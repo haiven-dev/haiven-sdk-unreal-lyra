@@ -24,6 +24,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenRealtimeEventInvalid, const 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenChatMessageSubmissionV0Replied, const FHaivenRealtimeReply&, Reply, const FHaivenChatMessageSubmissionV0&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenNotificationV0Replied, const FHaivenRealtimeReply&, Reply, const FHaivenNotificationV0&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenNotificationListV0Replied, const FHaivenRealtimeReply&, Reply, const TArray<FHaivenNotificationListV0Item>&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenP2pIceServersReplyV0Replied, const FHaivenRealtimeReply&, Reply, const FHaivenP2pIceServersReplyV0&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FHaivenSessionResumeReplyV0Replied, const FHaivenRealtimeReply&, Reply, const FHaivenSessionResumeReplyV0&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenAccountIdentityLinkFailedV0Received, const FHaivenAccountIdentityLinkFailedV0&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenAccountIdentityLinkedV0Received, const FHaivenAccountIdentityLinkedV0&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenAgegateUpdatedV0Received, const FHaivenAgegateUpdatedV0&, Payload);
@@ -42,7 +44,13 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenFriendRequestV0Received, cons
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenMotdV0Received, const FHaivenMotdV0&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenNotificationDeleteV0Received, const FHaivenNotificationDeleteV0&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenNotificationV0Received, const FHaivenNotificationV0&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenP2pSignalAckEventV0Received, const FHaivenP2pSignalAckEventV0&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenP2pSignalReceivedV0Received, const FHaivenP2pSignalReceivedV0&, Payload);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenPresenceV0Received, const FHaivenPresenceV0&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenSessionClosedV0Received, const FHaivenSessionClosedV0&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenSessionMemberJoinedV0Received, const FHaivenSessionMemberJoinedV0&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenSessionMemberLeftV0Received, const FHaivenSessionMemberLeftV0&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenSessionUpdatedV0Received, const FHaivenSessionUpdatedV0&, Payload);
 
 UCLASS()
 class HAIVEN_API UHaivenChatChannelActiveAsyncAction : public UBlueprintAsyncActionBase
@@ -55,7 +63,7 @@ public:
 	 *
 	 * Schema: chat-active-channel/v0
 	 *
-	 * Error codes (open: an unlisted code is still possible): internal_error, invalid_payload.
+	 * Error codes (open: an unlisted code is still possible): forbidden, internal_error, invalid_payload, not_channel_member.
 	 */
 	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|Realtime")
 	static UHaivenChatChannelActiveAsyncAction* RealtimeChatChannelActive(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FString& Payload);
@@ -160,7 +168,7 @@ public:
 	 *
 	 * Schema: chat-typing/v0
 	 *
-	 * Error codes (open: an unlisted code is still possible): forbidden, internal_error, invalid_payload.
+	 * Error codes (open: an unlisted code is still possible): forbidden, internal_error, invalid_payload, not_channel_member.
 	 */
 	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|Realtime")
 	static UHaivenChatTypingAsyncAction* RealtimeChatTyping(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FHaivenChatTypingV0& Payload);
@@ -345,6 +353,184 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FHaivenNotificationV0Replied Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRealtimeRequestFailed Failed;
+
+private:
+	void Finish(const FHaivenRealtimeReply& Reply);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString PayloadJson;
+	FString RequestId;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenP2pIceServersAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/**
+	 * Sends p2p.ice.servers and completes with its P2pIceServersReplyV0 reply. Failed carries the reply's error code.
+	 *
+	 * Error codes (open: an unlisted code is still possible): internal_error, rate_limited, relay_unavailable, session_not_found.
+	 */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|Realtime")
+	static UHaivenP2pIceServersAsyncAction* RealtimeP2pIceServers(UObject* WorldContextObject, UHaivenSubsystem* Subsystem);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Realtime")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenP2pIceServersReplyV0Replied Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRealtimeRequestFailed Failed;
+
+private:
+	void Finish(const FHaivenRealtimeReply& Reply);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString PayloadJson;
+	FString RequestId;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenP2pSignalAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/**
+	 * Sends p2p.signal and completes when the server answers it. Failed carries the reply's error code.
+	 *
+	 * Schema: p2p-signal/v0
+	 *
+	 * Error codes (open: an unlisted code is still possible): internal_error, invalid_payload, peer_not_in_session, rate_limited, session_not_found.
+	 */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|Realtime")
+	static UHaivenP2pSignalAsyncAction* RealtimeP2pSignal(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FHaivenP2pSignalV0& Payload);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Realtime")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRealtimeRequestReplied Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRealtimeRequestFailed Failed;
+
+private:
+	void Finish(const FHaivenRealtimeReply& Reply);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString PayloadJson;
+	FString RequestId;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenP2pSignalAckAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/**
+	 * Sends p2p.signal.ack and completes when the server answers it. Failed carries the reply's error code.
+	 *
+	 * Schema: p2p-signal-ack/v0
+	 *
+	 * Error codes (open: an unlisted code is still possible): internal_error, invalid_payload, peer_not_in_session, rate_limited, session_not_found.
+	 */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|Realtime")
+	static UHaivenP2pSignalAckAsyncAction* RealtimeP2pSignalAck(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FHaivenP2pSignalAckV0& Payload);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Realtime")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRealtimeRequestReplied Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRealtimeRequestFailed Failed;
+
+private:
+	void Finish(const FHaivenRealtimeReply& Reply);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString PayloadJson;
+	FString RequestId;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenSessionPeerConnectedAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/**
+	 * Sends session.peer.connected and completes when the server answers it. Failed carries the reply's error code.
+	 *
+	 * Schema: session-peer-connected/v0
+	 *
+	 * Error codes (open: an unlisted code is still possible): internal_error, invalid_payload, rate_limited, session_not_found.
+	 */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|Realtime")
+	static UHaivenSessionPeerConnectedAsyncAction* RealtimeSessionPeerConnected(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FHaivenSessionPeerConnectedV0& Payload);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Realtime")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRealtimeRequestReplied Completed;
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenRealtimeRequestFailed Failed;
+
+private:
+	void Finish(const FHaivenRealtimeReply& Reply);
+
+	UPROPERTY()
+	TObjectPtr<UHaivenSubsystem> Owner;
+	FString PayloadJson;
+	FString RequestId;
+};
+
+UCLASS()
+class HAIVEN_API UHaivenSessionResumeAsyncAction : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+
+public:
+	/**
+	 * Sends session.resume and completes with its SessionResumeReplyV0 reply. Failed carries the reply's error code.
+	 *
+	 * Schema: session-resume-request/v0
+	 *
+	 * Error codes (open: an unlisted code is still possible): internal_error, invalid_payload, rate_limited, session_not_found.
+	 */
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject"), Category = "Haiven|Realtime")
+	static UHaivenSessionResumeAsyncAction* RealtimeSessionResume(UObject* WorldContextObject, UHaivenSubsystem* Subsystem, const FHaivenSessionResumeRequestV0& Payload);
+
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Realtime")
+	void Cancel();
+
+	UPROPERTY(BlueprintAssignable)
+	FHaivenSessionResumeReplyV0Replied Completed;
 
 	UPROPERTY(BlueprintAssignable)
 	FHaivenRealtimeRequestFailed Failed;
@@ -609,12 +795,60 @@ public:
 	FHaivenNotificationV0Received OnNotificationsNew;
 
 	/**
+	 * p2p.signal.ack, with its P2pSignalAckEventV0 payload.
+	 *
+	 * Schema: p2p-signal-ack-event/v0
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Haiven|Realtime|Events")
+	FHaivenP2pSignalAckEventV0Received OnP2pSignalAck;
+
+	/**
+	 * p2p.signal.received, with its P2pSignalReceivedV0 payload.
+	 *
+	 * Schema: p2p-signal-received/v0
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Haiven|Realtime|Events")
+	FHaivenP2pSignalReceivedV0Received OnP2pSignalReceived;
+
+	/**
 	 * presence.updated, with its PresenceV0 payload.
 	 *
 	 * Schema: presence/v0
 	 */
 	UPROPERTY(BlueprintAssignable, Category = "Haiven|Realtime|Events")
 	FHaivenPresenceV0Received OnPresenceUpdated;
+
+	/**
+	 * session.closed, with its SessionClosedV0 payload.
+	 *
+	 * Schema: session-closed/v0
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Haiven|Realtime|Events")
+	FHaivenSessionClosedV0Received OnSessionClosed;
+
+	/**
+	 * session.member.joined, with its SessionMemberJoinedV0 payload.
+	 *
+	 * Schema: session-member-joined/v0
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Haiven|Realtime|Events")
+	FHaivenSessionMemberJoinedV0Received OnSessionMemberJoined;
+
+	/**
+	 * session.member.left, with its SessionMemberLeftV0 payload.
+	 *
+	 * Schema: session-member-left/v0
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Haiven|Realtime|Events")
+	FHaivenSessionMemberLeftV0Received OnSessionMemberLeft;
+
+	/**
+	 * session.updated, with its SessionUpdatedV0 payload.
+	 *
+	 * Schema: session-updated/v0
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Haiven|Realtime|Events")
+	FHaivenSessionUpdatedV0Received OnSessionUpdated;
 
 	/** A known event whose payload did not match its contract, with the reason. */
 	UPROPERTY(BlueprintAssignable, Category = "Haiven|Realtime|Events")

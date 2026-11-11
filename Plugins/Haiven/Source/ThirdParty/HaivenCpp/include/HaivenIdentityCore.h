@@ -189,7 +189,10 @@ namespace Haiven
 		void InvalidateSignInMethodsReads() { ++IdentityRevision; }
 		static bool IsValidMotdActionUrl(const std::string& Value) { return IsHttpsUrl(Value); }
 
-		/** A login/logout boundary invalidates every earlier REST completion. */
+		/**
+		 * A login/logout boundary invalidates every earlier account-owned REST
+		 * completion. The public MOTD read is not account-owned and survives it.
+		 */
 		void ResetAccount()
 		{
 			++LifecycleGeneration;
@@ -504,9 +507,12 @@ namespace Haiven
 
 		bool TicketCurrent(const FIdentityReadTicket& Ticket) const
 		{
-			if (Ticket.LifecycleGeneration != LifecycleGeneration) return false;
+			// The MOTD is public and platform-wide, read without a bearer, so an
+			// account boundary does not make a read stale. Only a newer read, a
+			// realtime MOTD event or a dismissal supersedes it.
 			if (Ticket.Domain == FIdentityReadTicket::EDomain::Motd)
 				return Ticket.Revision == MotdRevision && Ticket.RequestEpoch == MotdRequestEpoch;
+			if (Ticket.LifecycleGeneration != LifecycleGeneration) return false;
 			return Ticket.Revision == IdentityRevision && Ticket.RequestEpoch == IdentityRequestEpoch;
 		}
 

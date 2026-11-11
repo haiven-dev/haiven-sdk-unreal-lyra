@@ -33,6 +33,7 @@ namespace Haiven
 		std::string ExpiresAt;
 	};
 
+	/// A user's current availability and status.
 	struct PresenceV0
 	{
 		/// The user identifier.

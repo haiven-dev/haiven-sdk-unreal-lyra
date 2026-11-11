@@ -21,6 +21,7 @@ namespace Haiven
 		std::optional<std::string> LeftAt;
 	};
 
+	/// The payload of a direct-message membership event.
 	struct WsChatDmEventV0
 	{
 		/// The direct-message channel this event is about.

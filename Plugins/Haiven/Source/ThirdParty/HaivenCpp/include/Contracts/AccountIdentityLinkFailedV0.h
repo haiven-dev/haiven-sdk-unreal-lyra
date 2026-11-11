@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A link of a Google or Apple identity started from settings that was refused or abandoned.
 	struct AccountIdentityLinkFailedV0
 	{
 		/// The sign-in provider of the identity: google or apple.

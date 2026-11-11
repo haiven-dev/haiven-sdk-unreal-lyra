@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A pending friend request and the other user it involves.
 	struct FriendRequestV0
 	{
 		/// The stable identifier of this value.

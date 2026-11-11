@@ -30,6 +30,7 @@ namespace Haiven
 		std::optional<std::string> AvatarFrame;
 	};
 
+	/// A chat message visible to a gaming client.
 	struct ChatMessageV0
 	{
 		/// The identifier of the user who authored the message.

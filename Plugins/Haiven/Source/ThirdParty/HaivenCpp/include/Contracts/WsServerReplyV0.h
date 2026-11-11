@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A server frame that answers one frame the client sent.
 	struct WsServerReplyV0
 	{
 		/// The frame discriminator, echoing the type of the frame being answered or naming an auth outcome.

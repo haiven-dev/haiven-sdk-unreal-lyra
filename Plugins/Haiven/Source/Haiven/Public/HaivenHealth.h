@@ -69,7 +69,10 @@ struct HAIVEN_API FHaivenHealth
 	UPROPERTY(BlueprintReadOnly, Category = "Haiven|Health")
 	bool bHasAccessTokenExpiry = false;
 
-	/** Current credential expiry; the credential itself is never exposed here. */
+	/**
+	 * Current credential expiry, FDateTime::MaxValue() for a durable credential;
+	 * the credential itself is never exposed here.
+	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Haiven|Health")
 	FDateTime AccessTokenExpiresAtUtc;
 

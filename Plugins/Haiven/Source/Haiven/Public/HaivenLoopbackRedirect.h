@@ -22,10 +22,11 @@ namespace Haiven::LoopbackRedirect
 	};
 
 	/**
-	 * Accepts http://127.0.0.1:<port>/<path> or http://localhost:<port>/<path>,
-	 * with an explicit port, a path other than "/" without a trailing slash, an
-	 * optional query and no fragment. Anything else is not a redirect this game
-	 * can receive itself, so it is refused before a transaction starts.
+	 * Accepts `http://127.0.0.1:<port>/<path>` or
+	 * `http://localhost:<port>/<path>`, with an explicit port, a path other than
+	 * "/" without a trailing slash, an optional query and no fragment. Anything
+	 * else is not a redirect this game can receive itself, so it is refused before
+	 * a transaction starts.
 	 */
 	HAIVEN_API bool Parse(const FString& RedirectUrl, FEndpoint& OutEndpoint, FString& OutError);
 

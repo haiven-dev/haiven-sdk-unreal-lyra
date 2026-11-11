@@ -21,6 +21,7 @@ public class HaivenLyraInventory : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
+			"CommonUser",
 			"HaivenLyraDemo",
 			"LyraGame",
 		});

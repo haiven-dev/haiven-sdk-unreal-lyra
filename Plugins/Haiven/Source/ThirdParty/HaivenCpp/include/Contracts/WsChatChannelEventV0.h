@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// The payload of a chat channel event.
 	struct WsChatChannelEventV0
 	{
 		/// The community the channel belongs to.

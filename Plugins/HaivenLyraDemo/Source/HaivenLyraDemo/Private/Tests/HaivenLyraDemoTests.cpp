@@ -8,8 +8,11 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Blueprint/WidgetTree.h"
+#include "Components/Border.h"
 #include "Components/Button.h"
+#include "Components/SafeZone.h"
 #include "Components/ScrollBox.h"
+#include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Editor.h"
 #include "Engine/Engine.h"
@@ -19,12 +22,13 @@
 #include "SocketSubsystem.h"
 #include "Sockets.h"
 #include "HAL/PlatformMisc.h"
-#include "Misc/Base64.h"
 #include "Misc/ScopeExit.h"
 #include "Engine/World.h"
 #include "HaivenLyraChatWidget.h"
+#include "HaivenLyraDemoAnalytics.h"
 #include "HaivenLyraDemoSettings.h"
 #include "HaivenLyraDemoSubsystem.h"
+#include "HaivenLyraHostLoss.h"
 #include "HaivenLyraDemoTestChatWidget.h"
 #include "HaivenLyraEntitlements.h"
 #include "HaivenChat.h"
@@ -35,6 +39,40 @@
 #include "HaivenRewards.h"
 #include "HaivenSubsystem.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FHaivenLyraDemoHostLossTest,
+	"Haiven.LyraDemo.HostLoss",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FHaivenLyraDemoHostLossTest::RunTest(const FString& Parameters)
+{
+	FHaivenLyraHostLossState State;
+	TestFalse(TEXT("normal play has no host-loss status"), State.IsActive());
+	TestTrue(TEXT("normal play has empty host-loss text"), State.StatusText().IsEmpty());
+
+	TestFalse(
+		TEXT("a standalone or listen-host failure is not classified as host loss"),
+		State.Record(false, ENetworkFailure::ConnectionLost));
+	TestTrue(TEXT("the ignored failure leaves status empty"), State.StatusText().IsEmpty());
+
+	TestTrue(
+		TEXT("the first client connection loss ends the match"),
+		State.Record(true, ENetworkFailure::ConnectionLost));
+	TestTrue(TEXT("the terminal status names the disconnected host"),
+		State.StatusText().ToString().Contains(TEXT("HOST DISCONNECTED")));
+	TestFalse(
+		TEXT("repeated callbacks are idempotent"),
+		State.Record(true, ENetworkFailure::ConnectionTimeout));
+
+	State.Reset();
+	TestTrue(
+		TEXT("a new match can later report a timeout"),
+		State.Record(true, ENetworkFailure::ConnectionTimeout));
+	TestTrue(TEXT("timeout status is distinct"),
+		State.StatusText().ToString().Contains(TEXT("TIMED OUT")));
+	return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FHaivenLyraDemoClassesTest,
@@ -102,6 +140,30 @@ bool FHaivenLyraDemoPanelTest::RunTest(const FString& Parameters)
 	UHaivenLyraChatWidget* Panel = CreateWidget<UHaivenLyraChatWidget>(World, UHaivenLyraChatWidget::StaticClass());
 	if (!TestNotNull(TEXT("panel"), Panel)) return false;
 	Panel->TakeWidget();
+	TestNotNull(TEXT("the fallback starts at a full-viewport safe area"),
+		Cast<USafeZone>(Panel->WidgetTree->FindWidget(TEXT("HaivenSafeArea"))));
+	TestNotNull(TEXT("persistent controls have a dedicated handle layer"),
+		Panel->WidgetTree->FindWidget(TEXT("HaivenHandleLayer")));
+	TestNotNull(TEXT("drawers have a dedicated dialog layer"),
+		Panel->WidgetTree->FindWidget(TEXT("HaivenDialogLayer")));
+	TestNotNull(TEXT("chat has a stable named handle"), Panel->WidgetTree->FindWidget(TEXT("ChatHandle")));
+	TestNotNull(TEXT("rewards have a stable named handle"), Panel->WidgetTree->FindWidget(TEXT("RewardsHandle")));
+	UBorder* ChatDrawer = Cast<UBorder>(Panel->WidgetTree->FindWidget(TEXT("ChatDrawer")));
+	UBorder* RewardsDrawer = Cast<UBorder>(Panel->WidgetTree->FindWidget(TEXT("RewardsDrawer")));
+	if (TestNotNull(TEXT("chat drawer"), ChatDrawer))
+		TestEqual(TEXT("chat drawer defaults collapsed"), ChatDrawer->GetVisibility(), ESlateVisibility::Collapsed);
+	if (TestNotNull(TEXT("rewards drawer"), RewardsDrawer))
+		TestEqual(TEXT("rewards drawer defaults collapsed"), RewardsDrawer->GetVisibility(), ESlateVisibility::Collapsed);
+	UButton* ChatHandle = Cast<UButton>(Panel->WidgetTree->FindWidget(TEXT("ChatHandle")));
+	if (TestNotNull(TEXT("chat handle button"), ChatHandle) && ChatDrawer)
+	{
+		ChatHandle->OnClicked.Broadcast();
+		TestEqual(TEXT("chat handle opens its drawer"), ChatDrawer->GetVisibility(), ESlateVisibility::Visible);
+		Panel->CollapseDrawers();
+	}
+	USizeBox* ChatHandleFrame = Cast<USizeBox>(Panel->WidgetTree->FindWidget(TEXT("ChatHandleFrame")));
+	if (TestNotNull(TEXT("chat handle frame"), ChatHandleFrame))
+		TestTrue(TEXT("chat handle exceeds the 44px minimum control height"), ChatHandleFrame->GetHeightOverride() >= 44.0f);
 
 	UScrollBox* Log = Panel->WidgetTree ? Cast<UScrollBox>(Panel->WidgetTree->FindWidget(TEXT("Log"))) : nullptr;
 	if (!TestNotNull(TEXT("the code-built tree has a log"), Log)) return false;
@@ -263,6 +325,17 @@ bool FHaivenLyraDemoMotdPanelTest::RunTest(const FString& Parameters)
 	Panel->TakeWidget();
 	TestTrue(TEXT("native MOTD fallback has every designer binding"), Panel->HasDesignerBindings());
 	TestTrue(TEXT("native MOTD fallback reports code-built presentation"), Panel->UsesCodeBuiltTree());
+	TestNotNull(TEXT("MOTD starts at its own full-viewport safe area"),
+		Cast<USafeZone>(Panel->WidgetTree->FindWidget(TEXT("MotdSafeArea"))));
+	TestNotNull(TEXT("MOTD has a dedicated handle layer"), Panel->WidgetTree->FindWidget(TEXT("MotdHandleLayer")));
+	TestNotNull(TEXT("MOTD has a dedicated dialog layer"), Panel->WidgetTree->FindWidget(TEXT("MotdDialogLayer")));
+	TestNotNull(TEXT("MOTD has a stable named handle"), Panel->WidgetTree->FindWidget(TEXT("MotdHandle")));
+	UBorder* MotdDrawer = Cast<UBorder>(Panel->WidgetTree->FindWidget(TEXT("MotdDrawer")));
+	if (TestNotNull(TEXT("MOTD drawer"), MotdDrawer))
+		TestEqual(TEXT("MOTD drawer defaults collapsed"), MotdDrawer->GetVisibility(), ESlateVisibility::Collapsed);
+	USizeBox* MotdHandleFrame = Cast<USizeBox>(Panel->WidgetTree->FindWidget(TEXT("MotdHandleFrame")));
+	if (TestNotNull(TEXT("MOTD handle frame"), MotdHandleFrame))
+		TestTrue(TEXT("MOTD handle exceeds the 44px minimum control height"), MotdHandleFrame->GetHeightOverride() >= 44.0f);
 
 	Panel->PresentLoading();
 	TestEqual(TEXT("loading state has shared spelling"), Panel->GetPresentationStateName(), FString(TEXT("loading")));
@@ -279,6 +352,13 @@ bool FHaivenLyraDemoMotdPanelTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("missing title uses the shared fallback"), Panel->GetDisplayedTitle().ToString(), FString(TEXT("Message of the day")));
 	TestEqual(TEXT("body remains plain text"), Panel->GetDisplayedBody().ToString(), Message.Body);
 	TestTrue(TEXT("validated HTTPS action is exposed"), Panel->HasAction());
+	UButton* MotdHandle = Cast<UButton>(Panel->WidgetTree->FindWidget(TEXT("MotdHandle")));
+	if (TestNotNull(TEXT("MOTD handle button"), MotdHandle) && MotdDrawer)
+	{
+		MotdHandle->OnClicked.Broadcast();
+		TestEqual(TEXT("MOTD handle opens its drawer"), MotdDrawer->GetVisibility(), ESlateVisibility::Visible);
+		Panel->CollapseDrawer();
+	}
 
 	Message.Id = TEXT("22222222-2222-4222-8222-222222222222");
 	Message.Url = TEXT("http://haiven.gg/news");
@@ -347,6 +427,9 @@ bool FHaivenLyraDemoEntitlementsTest::RunTest(const FString& Parameters)
 		Entitlement(TEXT("tag/old"), TEXT("item"), TEXT("revoked")),
 		Entitlement(TEXT("tag/hero"), TEXT("item"), TEXT("active")),
 	};
+	TestEqual(TEXT("the current projection contains only active items"),
+		HaivenLyraEntitlements::ActiveItems(Response),
+		TArray<FString>{TEXT("avatar_frame/founder_supporter"), TEXT("tag/hero")});
 	TestEqual(TEXT("only active items, in order, once each"),
 		HaivenLyraEntitlements::NewlyActiveItems(Response, {}),
 		TArray<FString>{TEXT("avatar_frame/founder_supporter"), TEXT("tag/hero")});
@@ -365,19 +448,6 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 namespace HaivenLyraDemoSignInDetail
 {
-	/** A JWT-shaped string with the given claims and no real signature: never a usable token. */
-	FString FakeJwt(const FString& Claims)
-	{
-		auto Segment = [](const FString& Json)
-		{
-			FString Encoded = FBase64::Encode(Json, EBase64Mode::UrlSafe);
-			Encoded.RemoveFromEnd(TEXT("=="));
-			Encoded.RemoveFromEnd(TEXT("="));
-			return Encoded;
-		};
-		return Segment(TEXT("{\"alg\":\"none\"}")) + TEXT(".") + Segment(Claims) + TEXT(".unsigned");
-	}
-
 	/** A loopback port nothing holds, below the ephemeral ranges. */
 	uint32 FreeLoopbackPort()
 	{
@@ -420,21 +490,16 @@ bool FHaivenLyraDemoSignInTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("options: redirect"), Options.RedirectUrl, Fresh->ResolveLoginRedirectUrl());
 	TestTrue(TEXT("options: no screen hint the API would refuse"), Options.ScreenHint.IsEmpty());
 
-	// HAIVEN_DEMO_ACCESS_TOKEN's lifetime comes from the token, not an assumed hour.
+	// Environment-token expiry is separate metadata; the bearer is never decoded.
 	const FDateTime Now(2026, 10, 20, 12, 0, 0);
-	bool bFromToken = false;
-	const int64 Exp = Now.ToUnixTimestamp() + 25 * 60;
-	TestEqual(TEXT("a JWT's exp claim is its expiry"),
-		HaivenLyraSignIn::DemoTokenExpiry(FakeJwt(FString::Printf(TEXT("{\"exp\":%lld,\"token_use\":\"access\"}"), Exp)), Now, bFromToken),
-		FDateTime::FromUnixTimestamp(Exp));
-	TestTrue(TEXT("the expiry came from the token"), bFromToken);
-	TestEqual(TEXT("an opaque token gets the staging lifetime"),
-		HaivenLyraSignIn::DemoTokenExpiry(TEXT("opaque-demo-value"), Now, bFromToken), Now + FTimespan::FromMinutes(30.0));
-	TestFalse(TEXT("an opaque token's expiry is assumed"), bFromToken);
-	HaivenLyraSignIn::DemoTokenExpiry(TEXT("a.!!!.c"), Now, bFromToken);
-	TestFalse(TEXT("an unreadable payload falls back"), bFromToken);
-	HaivenLyraSignIn::DemoTokenExpiry(FakeJwt(TEXT("{\"sub\":\"x\"}")), Now, bFromToken);
-	TestFalse(TEXT("a JWT without exp falls back"), bFromToken);
+	FDateTime ParsedExpiry;
+	TestTrue(TEXT("ISO-8601 expiry metadata parses"),
+		HaivenLyraSignIn::DemoTokenExpiryMetadata(Now.ToIso8601(), ParsedExpiry));
+	TestEqual(TEXT("expiry metadata is exact"), ParsedExpiry, Now);
+	TestFalse(TEXT("a JWT-shaped value is not decoded as expiry metadata"),
+		HaivenLyraSignIn::DemoTokenExpiryMetadata(TEXT("header.eyJleHAiOjF9.signature"), ParsedExpiry));
+	TestFalse(TEXT("missing expiry metadata is rejected"),
+		HaivenLyraSignIn::DemoTokenExpiryMetadata(TEXT(""), ParsedExpiry));
 
 	// The state machine, against a real Haiven subsystem with no browser.
 	UHaivenLyraDemoSettings* Settings = GetMutableDefault<UHaivenLyraDemoSettings>();
@@ -442,6 +507,7 @@ bool FHaivenLyraDemoSignInTest::RunTest(const FString& Parameters)
 		Settings->BaseUrl, Settings->RealtimeUrl, Settings->AppId, Settings->ChannelId,
 		Settings->IntegrationId, Settings->LoginEntryUrl, Settings->LoginRedirectUrl };
 	const FString SavedToken = FPlatformMisc::GetEnvironmentVariable(TEXT("HAIVEN_DEMO_ACCESS_TOKEN"));
+	const FString SavedTokenExpiry = FPlatformMisc::GetEnvironmentVariable(TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT"));
 	const uint32 Port = FreeLoopbackPort();
 	if (!TestTrue(TEXT("a free loopback port"), Port != 0)) return false;
 	const FString Redirect = FString::Printf(TEXT("http://127.0.0.1:%u/haiven/lyra-test"), Port);
@@ -463,6 +529,7 @@ bool FHaivenLyraDemoSignInTest::RunTest(const FString& Parameters)
 		Settings->LoginEntryUrl = Saved[5];
 		Settings->LoginRedirectUrl = Saved[6];
 		FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN"), *SavedToken);
+		FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT"), *SavedTokenExpiry);
 	};
 	Settings->BaseUrl = TEXT("http://127.0.0.1:9/v0");
 	Settings->RealtimeUrl.Reset();
@@ -538,23 +605,77 @@ bool FHaivenLyraDemoSignInTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("an unconfigured sign-in fails visibly"), Demo->GetSignInState() == EHaivenLyraSignInState::Failed);
 	TestEqual(TEXT("an unconfigured sign-in never opens the browser"), Launches, 4);
 
-	// The HAIVEN_DEMO_ACCESS_TOKEN shortcut keeps working, on the token's own expiry.
+	// The environment shortcut requires explicit expiry and treats its bearer as opaque.
 	Settings->RealtimeUrl = TEXT("ws://127.0.0.1:9/v0/ws");
 	Settings->AppId = TEXT("lyra-test");
 	Settings->ChannelId = TEXT("general");
-	const int64 Past = FDateTime::UtcNow().ToUnixTimestamp() - 60;
-	FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN"), *FakeJwt(FString::Printf(TEXT("{\"exp\":%lld}"), Past)));
+	FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN"), TEXT("header.eyJleHAiOjF9.signature"));
+	FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT"), TEXT(""));
+	Demo->Connect();
+	TestTrue(TEXT("missing expiry metadata rejects an environment token"), Demo->GetSignInState() == EHaivenLyraSignInState::Failed);
+	const FDateTime Past = FDateTime::FromUnixTimestamp(FDateTime::UtcNow().ToUnixTimestamp() - 60);
+	FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT"), *Past.ToIso8601());
 	Demo->Connect();
 	TestTrue(TEXT("an expired demo token is reported, not used"), Demo->GetSignInState() == EHaivenLyraSignInState::Expired);
 	TestFalse(TEXT("an expired demo token is never handed to the plugin"), Haiven->GetAccessToken(Token));
-	const int64 Future = FDateTime::UtcNow().ToUnixTimestamp() + 20 * 60;
-	FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN"), *FakeJwt(FString::Printf(TEXT("{\"exp\":%lld}"), Future)));
+	const FDateTime Future = FDateTime::FromUnixTimestamp(FDateTime::UtcNow().ToUnixTimestamp() + 20 * 60);
+	FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT"), *Future.ToIso8601());
 	Demo->Connect();
 	TestTrue(TEXT("a live demo token signs in"), Demo->GetSignInState() == EHaivenLyraSignInState::SignedIn);
-	TestEqual(TEXT("the demo expiry is the token's exp"), Demo->GetSignInExpiresAtUtc(), FDateTime::FromUnixTimestamp(Future));
-	TestEqual(TEXT("the plugin's expiry is the token's exp, not an hour"),
-		Haiven->GetHealth().AccessTokenExpiresAtUtc, FDateTime::FromUnixTimestamp(Future));
+	TestEqual(TEXT("the demo expiry is the explicit metadata"), Demo->GetSignInExpiresAtUtc(), Future);
+	TestEqual(TEXT("the plugin receives the explicit expiry metadata"),
+		Haiven->GetHealth().AccessTokenExpiresAtUtc, Future);
 	Haiven->DisconnectRealtime();
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FHaivenLyraDemoAnalyticsTest,
+	"Haiven.LyraDemo.Analytics",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FHaivenLyraDemoAnalyticsTest::RunTest(const FString& Parameters)
+{
+	TestTrue(TEXT("true opts in"), FHaivenLyraDemoAnalytics::IsEnabledValue(TEXT("true")));
+	TestTrue(TEXT("one opts in"), FHaivenLyraDemoAnalytics::IsEnabledValue(TEXT("1")));
+	TestTrue(TEXT("yes is case-insensitive"), FHaivenLyraDemoAnalytics::IsEnabledValue(TEXT(" YES ")));
+	TestTrue(TEXT("on opts in"), FHaivenLyraDemoAnalytics::IsEnabledValue(TEXT("on")));
+	TestFalse(TEXT("unknown values remain off"), FHaivenLyraDemoAnalytics::IsEnabledValue(TEXT("enabled")));
+	TestFalse(TEXT("empty remains off"), FHaivenLyraDemoAnalytics::IsEnabledValue(FString()));
+
+	double Now = 100.0;
+	TArray<TPair<FString, FString>> Events;
+	FHaivenLyraDemoAnalytics Analytics(
+		[&Events](const FString& Type, const FString& Properties)
+		{
+			Events.Emplace(Type, Properties);
+			return true;
+		},
+		[&Now]() { return Now; });
+
+	Analytics.GameLaunched();
+	Analytics.GameLaunched();
+	Analytics.Connecting();
+	Analytics.SessionStarted();
+	Analytics.SessionStarted();
+	Now += 90000.0;
+	Analytics.Disconnected();
+	Analytics.Disconnected();
+	Analytics.Connecting();
+	Analytics.Disconnected();
+
+	TArray<FString> Types;
+	for (const TPair<FString, FString>& Event : Events) Types.Add(Event.Key);
+	TestEqual(TEXT("one launch, one session, health, end/playtime, and failed reconnect events"), Events.Num(), 7);
+	TestEqual(TEXT("launch is first and emitted once"), Types[0], FString(TEXT("game.launch")));
+	TestEqual(TEXT("session starts once"), Types[1], FString(TEXT("session.start")));
+	TestEqual(TEXT("ready emits health"), Types[2], FString(TEXT("sdk.health")));
+	TestEqual(TEXT("repeated ready emits health without another start"), Types[3], FString(TEXT("sdk.health")));
+	TestEqual(TEXT("disconnect ends the session"), Types[4], FString(TEXT("session.end")));
+	TestEqual(TEXT("disconnect records bounded playtime"), Types[5], FString(TEXT("playtime")));
+	TestTrue(TEXT("playtime is capped at one day"), Events[5].Value.Contains(TEXT("86400.000")));
+	TestEqual(TEXT("failed reconnect reports health error"), Types[6], FString(TEXT("sdk.health")));
+	TestTrue(TEXT("failed reconnect has no player data"), Events[6].Value.Contains(TEXT("\"error\"")));
 	return true;
 }
 

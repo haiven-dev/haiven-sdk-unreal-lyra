@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A chat community its owner deleted; the last event it sends before its subscribers are dropped.
 	struct ChatCommunityDeletedV0
 	{
 		/// The chat community identifier.

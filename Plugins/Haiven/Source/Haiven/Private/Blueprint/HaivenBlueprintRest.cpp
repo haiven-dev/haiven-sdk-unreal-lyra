@@ -71,6 +71,21 @@ FHaivenRestRequest UHaivenRestRequests::GetAgeGateRequirements(const FString& Ju
 	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::GetAgeGateRequirements(HaivenBlueprintRestDetail::ToUtf8(Jurisdiction)));
 }
 
+FHaivenRestRequest UHaivenRestRequests::GetAnnouncements(bool bHasCategory, const FString& Category, bool bHasLimit, int64 Limit, bool bHasOffset, int64 Offset)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::GetAnnouncements(bHasCategory ? std::optional<std::string>(HaivenBlueprintRestDetail::ToUtf8(Category)) : std::optional<std::string>(), bHasLimit ? std::optional<std::int64_t>(static_cast<std::int64_t>(Limit)) : std::optional<std::int64_t>(), bHasOffset ? std::optional<std::int64_t>(static_cast<std::int64_t>(Offset)) : std::optional<std::int64_t>()));
+}
+
+FHaivenRestRequest UHaivenRestRequests::PostAnnouncementsLastReadAnnouncementId(const FString& AnnouncementId)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::PostAnnouncementsLastReadAnnouncementId(HaivenBlueprintRestDetail::ToUtf8(AnnouncementId)));
+}
+
+FHaivenRestRequest UHaivenRestRequests::GetAnnouncementsUnread()
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::GetAnnouncementsUnread());
+}
+
 FHaivenRestRequest UHaivenRestRequests::GetApps(bool bHasQ, const FString& Q, bool bHasTag, const TArray<FString>& Tag, bool bHasPlatform, const FString& Platform, bool bHasEarlyAccess, bool EarlyAccess, bool bHasSort, const FString& Sort, bool bHasLimit, int64 Limit, bool bHasOffset, int64 Offset)
 {
 	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::GetApps(bHasQ ? std::optional<std::string>(HaivenBlueprintRestDetail::ToUtf8(Q)) : std::optional<std::string>(), bHasTag ? std::optional<std::vector<std::string>>(HaivenBlueprintRestDetail::Strings(Tag)) : std::optional<std::vector<std::string>>(), bHasPlatform ? std::optional<std::string>(HaivenBlueprintRestDetail::ToUtf8(Platform)) : std::optional<std::string>(), bHasEarlyAccess ? std::optional<bool>(EarlyAccess) : std::optional<bool>(), bHasSort ? std::optional<std::string>(HaivenBlueprintRestDetail::ToUtf8(Sort)) : std::optional<std::string>(), bHasLimit ? std::optional<std::int64_t>(static_cast<std::int64_t>(Limit)) : std::optional<std::int64_t>(), bHasOffset ? std::optional<std::int64_t>(static_cast<std::int64_t>(Offset)) : std::optional<std::int64_t>()));
@@ -371,6 +386,51 @@ FHaivenRestRequest UHaivenRestRequests::PostChatMessagesMessageIdReport(const FS
 	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::PostChatMessagesMessageIdReport(HaivenBlueprintRestDetail::ToUtf8(MessageId), HaivenBlueprintRestDetail::ToUtf8(BodyJson)));
 }
 
+FHaivenRestRequest UHaivenRestRequests::GetGamesGameIdAccess(int64 GameId)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::GetGamesGameIdAccess(static_cast<std::int64_t>(GameId)));
+}
+
+FHaivenRestRequest UHaivenRestRequests::GetGamesGameIdSessions(int64 GameId, bool bHasCursor, const FString& Cursor, bool bHasLimit, int64 Limit)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::GetGamesGameIdSessions(static_cast<std::int64_t>(GameId), bHasCursor ? std::optional<std::string>(HaivenBlueprintRestDetail::ToUtf8(Cursor)) : std::optional<std::string>(), bHasLimit ? std::optional<std::int64_t>(static_cast<std::int64_t>(Limit)) : std::optional<std::int64_t>()));
+}
+
+FHaivenRestRequest UHaivenRestRequests::PostGamesGameIdSessions(int64 GameId, const FString& BodyJson)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::PostGamesGameIdSessions(static_cast<std::int64_t>(GameId), HaivenBlueprintRestDetail::ToUtf8(BodyJson)));
+}
+
+FHaivenRestRequest UHaivenRestRequests::GetGamesGameIdSessionsSessionId(int64 GameId, const FString& SessionId)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::GetGamesGameIdSessionsSessionId(static_cast<std::int64_t>(GameId), HaivenBlueprintRestDetail::ToUtf8(SessionId)));
+}
+
+FHaivenRestRequest UHaivenRestRequests::PatchGamesGameIdSessionsSessionId(int64 GameId, const FString& SessionId, const FString& BodyJson)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::PatchGamesGameIdSessionsSessionId(static_cast<std::int64_t>(GameId), HaivenBlueprintRestDetail::ToUtf8(SessionId), HaivenBlueprintRestDetail::ToUtf8(BodyJson)));
+}
+
+FHaivenRestRequest UHaivenRestRequests::PostGamesGameIdSessionsSessionIdInvites(int64 GameId, const FString& SessionId, const FString& BodyJson)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::PostGamesGameIdSessionsSessionIdInvites(static_cast<std::int64_t>(GameId), HaivenBlueprintRestDetail::ToUtf8(SessionId), HaivenBlueprintRestDetail::ToUtf8(BodyJson)));
+}
+
+FHaivenRestRequest UHaivenRestRequests::PostGamesGameIdSessionsSessionIdMembers(int64 GameId, const FString& SessionId, const FString& BodyJson)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::PostGamesGameIdSessionsSessionIdMembers(static_cast<std::int64_t>(GameId), HaivenBlueprintRestDetail::ToUtf8(SessionId), HaivenBlueprintRestDetail::ToUtf8(BodyJson)));
+}
+
+FHaivenRestRequest UHaivenRestRequests::DeleteGamesGameIdSessionsSessionIdMembersMe(int64 GameId, const FString& SessionId)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::DeleteGamesGameIdSessionsSessionIdMembersMe(static_cast<std::int64_t>(GameId), HaivenBlueprintRestDetail::ToUtf8(SessionId)));
+}
+
+FHaivenRestRequest UHaivenRestRequests::DeleteGamesGameIdSessionsSessionIdMembersUserId(int64 GameId, const FString& SessionId, const FString& UserId)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::DeleteGamesGameIdSessionsSessionIdMembersUserId(static_cast<std::int64_t>(GameId), HaivenBlueprintRestDetail::ToUtf8(SessionId), HaivenBlueprintRestDetail::ToUtf8(UserId)));
+}
+
 FHaivenRestRequest UHaivenRestRequests::PostHooksKid()
 {
 	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::PostHooksKid());
@@ -621,6 +681,11 @@ FHaivenRestRequest UHaivenRestRequests::GetStudiosStudioIdAppsAppIdIntegrationsI
 	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::GetStudiosStudioIdAppsAppIdIntegrationsIntegrationIdHealth(HaivenBlueprintRestDetail::ToUtf8(StudioId), HaivenBlueprintRestDetail::ToUtf8(AppId), HaivenBlueprintRestDetail::ToUtf8(IntegrationId)));
 }
 
+FHaivenRestRequest UHaivenRestRequests::PutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUris(const FString& StudioId, const FString& AppId, const FString& IntegrationId, const FString& BodyJson)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::PutStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRedirectUris(HaivenBlueprintRestDetail::ToUtf8(StudioId), HaivenBlueprintRestDetail::ToUtf8(AppId), HaivenBlueprintRestDetail::ToUtf8(IntegrationId), HaivenBlueprintRestDetail::ToUtf8(BodyJson)));
+}
+
 FHaivenRestRequest UHaivenRestRequests::GetStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRewards(const FString& StudioId, const FString& AppId, const FString& IntegrationId)
 {
 	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::GetStudiosStudioIdAppsAppIdIntegrationsIntegrationIdRewards(HaivenBlueprintRestDetail::ToUtf8(StudioId), HaivenBlueprintRestDetail::ToUtf8(AppId), HaivenBlueprintRestDetail::ToUtf8(IntegrationId)));
@@ -684,6 +749,11 @@ FHaivenRestRequest UHaivenRestRequests::PostStudiosStudioIdAppsAppIdMediaComplet
 FHaivenRestRequest UHaivenRestRequests::PatchStudiosStudioIdAppsAppIdMediaOrder(const FString& StudioId, const FString& AppId, const FString& BodyJson)
 {
 	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::PatchStudiosStudioIdAppsAppIdMediaOrder(HaivenBlueprintRestDetail::ToUtf8(StudioId), HaivenBlueprintRestDetail::ToUtf8(AppId), HaivenBlueprintRestDetail::ToUtf8(BodyJson)));
+}
+
+FHaivenRestRequest UHaivenRestRequests::PutStudiosStudioIdAppsAppIdOfficialCommunity(const FString& StudioId, const FString& AppId, const FString& BodyJson)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::PutStudiosStudioIdAppsAppIdOfficialCommunity(HaivenBlueprintRestDetail::ToUtf8(StudioId), HaivenBlueprintRestDetail::ToUtf8(AppId), HaivenBlueprintRestDetail::ToUtf8(BodyJson)));
 }
 
 FHaivenRestRequest UHaivenRestRequests::GetStudiosStudioIdAppsAppIdRequirements(const FString& StudioId, const FString& AppId)
@@ -1009,6 +1079,11 @@ FHaivenRestRequest UHaivenRestRequests::PatchUsersMeFriendsRelationshipIdSetting
 FHaivenRestRequest UHaivenRestRequests::GetUsersMeGameCredentials()
 {
 	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::GetUsersMeGameCredentials());
+}
+
+FHaivenRestRequest UHaivenRestRequests::DeleteUsersMeGameCredentials(const FString& IntegrationId)
+{
+	return HaivenBlueprintRestDetail::FromCpp(Haiven::Rest::DeleteUsersMeGameCredentials(HaivenBlueprintRestDetail::ToUtf8(IntegrationId)));
 }
 
 FHaivenRestRequest UHaivenRestRequests::DeleteUsersMeGameCredentialsCredentialId(const FString& CredentialId)

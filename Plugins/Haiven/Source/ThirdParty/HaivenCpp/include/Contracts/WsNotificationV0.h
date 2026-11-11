@@ -12,6 +12,7 @@
 
 namespace Haiven
 {
+	/// A stored notification belonging to the authenticated user.
 	struct WsNotificationV0
 	{
 		/// The notification's server-assigned identifier.
