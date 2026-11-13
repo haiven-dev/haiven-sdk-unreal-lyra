@@ -12,14 +12,13 @@ For more information please visit the [Unreal Engine Lyra documentation](https:/
 Once installed, copy the "Content" folder and any other folders named "Content" from the Marketplace project you downloaded to the project in your solution, and you should be good to go.
 
 
+## Haiven versioning
+
+[haiven-sdk-unreal](https://github.com/haiven-dev/haiven-sdk-unreal) follows semver: a feature ships in a minor release and a fix ships in a patch.
+
+The intended policy for this demo is to track the major.minor of haiven-sdk-unreal and to let a feature that shows part of the platform in Lyra ship as a demo patch, with no change to haiven-sdk-unreal. The release configuration does not enforce that yet. Today release-please versions this repository on its own from conventional commits ([release-please-config.json](https://github.com/haiven-dev/haiven-sdk-unreal-lyra/blob/main/release-please-config.json)), starting at 0.0.1. Before 1.0, `bump-patch-for-minor-pre-major` turns a `feat:` commit into a patch bump. Nothing ties this version to haiven-sdk-unreal.
+
+
 Additional Information
 ----
 See the [Unreal Engine README](../../../README.md) at the root of the repository for [Licensing](../../../README.md#licensing) and [Contributing](../../../README.md#contributions) information.
-
-## Haiven versioning
-
-haiven-sdk and haiven-sdk-unreal follow semver. A feature of the Unreal target ships in the shared major.minor release, in parity with the other target SDKs. A patch of haiven-sdk-unreal is a fix and can ship on its own.
-
-This demo, haiven-sdk-unreal-lyra, publishes that same major.minor and does not follow semver. A feature that shows part of the platform in Lyra can be introduced in a patch. That patch leaves haiven-sdk and haiven-sdk-unreal unchanged.
-
-The proposal is [haiven-docs ADR 0051](https://github.com/haiven-dev/haiven-docs/blob/docs/adr-0051-major-minor-lockstep/decisions/0051-major-minor-lockstep.md).
