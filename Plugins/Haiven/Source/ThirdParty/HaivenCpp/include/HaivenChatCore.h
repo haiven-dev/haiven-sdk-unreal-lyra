@@ -52,7 +52,7 @@ namespace Haiven
 	 * A session is one socket, so this outlives sessions: Attach each session the
 	 * game opens, including after a reconnect. Every send carries a client
 	 * message id; a send unanswered when its socket closes becomes Unconfirmed,
-	 * and the next Attach resends it under the same id, which haiven-api
+	 * and the next Attach resends it under the same id, which the game service
 	 * deduplicates. Nothing here throws on a network failure: a send without a
 	 * usable session is kept and resent on attach.
 	 *

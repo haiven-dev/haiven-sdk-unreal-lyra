@@ -92,9 +92,11 @@ class SourceZipTests(unittest.TestCase):
             self.assertEqual(payload["engineAssociation"], "5.8")
 
     def test_repository_source_bundle(self):
+        # Read the version from the descriptors so a release-please bump does not break this test.
+        version = release.descriptor_version()
         with tempfile.TemporaryDirectory() as directory:
-            archive = release.source("0.0.0", directory)
-            self.assertEqual(archive.name, "haiven-unreal-lyra-source-0.0.0.zip")
+            archive = release.source(version, directory)
+            self.assertEqual(archive.name, f"haiven-unreal-lyra-source-{version}.zip")
             with zipfile.ZipFile(archive) as bundle:
                 names = bundle.namelist()
                 payload = json.loads(bundle.read("Lyra/release-manifest.json"))
@@ -105,7 +107,7 @@ class SourceZipTests(unittest.TestCase):
             self.assertTrue(all(name.startswith("Lyra/") for name in names))
             self.assertNotIn("Lyra/.git", names)
             self.assertFalse(any(Path(name).suffix.lower() in release.FORBIDDEN_SUFFIXES for name in names))
-            self.assertEqual(payload["version"], "0.0.0")
+            self.assertEqual(payload["version"], version)
             self.assertEqual(payload["engineAssociation"], release.engine_association())
             self.assertIsNone(payload["playerBinary"])
 
