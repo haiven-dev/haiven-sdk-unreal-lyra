@@ -1,0 +1,42 @@
+name: release-please
+
+# Runs on main alone. Work lands on sdk-dev, and the Promotion PR workflow
+# keeps the sdk-dev -> main pull request open. Once that pull request merges
+# with a merge commit, this opens the release pull request that bumps
+# CHANGELOG.md, .release-please-manifest.json, and VersionName in
+# Plugins/Haiven/Haiven.uplugin, Plugins/HaivenLyraDemo/HaivenLyraDemo.uplugin,
+# and Plugins/HaivenLyraInventory/HaivenLyraInventory.uplugin. It does not change
+# the integer Version field or Epic's Lyra plugins. Merging that pull request
+# tags v<version> and publishes the GitHub release.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint release-please token
+        id: release-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        with:
+          app-id: ${{ vars.HAIVEN_RELEASE_APP_ID }}
+          private-key: ${{ secrets.HAIVEN_RELEASE_APP_PRIVATE_KEY }}
+          owner: haiven-dev
+          repositories: haiven-sdk-unreal-lyra
+
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
+        id: release
+        with:
+          token: ${{ steps.release-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          target-branch: main
