@@ -126,6 +126,17 @@ public:
 	/** A reward claim needs the integration it is claimed for and the reward itself. */
 	bool IsRewardConfigured() const { return !IntegrationId.IsEmpty() && !RewardRef.IsEmpty(); }
 
+	/**
+	 * Applies the HAIVEN_DEMO_* variables the Boss Room demo reads, so one .env
+	 * file configures both demos: BASE_URL, REALTIME_URL, APP_ID,
+	 * INTEGRATION_ID, CHANNEL_ID, REWARD_REF, SIGN_IN_URL (LoginEntryUrl; legacy
+	 * LOGIN_ENTRY_URL) and LOGIN_REDIRECT_URL or Boss Room's REDIRECT_URI
+	 * (LoginRedirectUrl). A non-empty variable replaces the Project
+	 * Settings value in memory for this run; an unset one keeps it. Read is
+	 * called with each variable name. Returns the names that were applied.
+	 */
+	TArray<FString> ApplyEnvironmentOverrides(TFunctionRef<FString(const TCHAR*)> Read);
+
 	/** Whether every setting the demo needs to connect is present. */
 	bool IsConfigured() const
 	{

@@ -9,6 +9,16 @@ namespace HaivenLyraSignIn
 		return !Value.IsEmpty() && FDateTime::ParseIso8601(*Value, OutExpiresAtUtc);
 	}
 
+	bool DemoTokenExpiry(const FString& Value, FDateTime& OutExpiresAtUtc)
+	{
+		if (Value.TrimStartAndEnd().IsEmpty())
+		{
+			OutExpiresAtUtc = FDateTime::MaxValue();
+			return true;
+		}
+		return DemoTokenExpiryMetadata(Value.TrimStartAndEnd(), OutExpiresAtUtc);
+	}
+
 	FHaivenGameLoginOptions LoginOptions(const UHaivenLyraDemoSettings& Settings)
 	{
 		FHaivenGameLoginOptions Options;

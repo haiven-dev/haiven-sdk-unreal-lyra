@@ -19,6 +19,38 @@ FString UHaivenLyraDemoSettings::ResolveLoginExchangeUrl() const
 	return Base + TEXT("/auth/handoff/exchange");
 }
 
+TArray<FString> UHaivenLyraDemoSettings::ApplyEnvironmentOverrides(TFunctionRef<FString(const TCHAR*)> Read)
+{
+	const TPair<const TCHAR*, FString*> Overrides[] = {
+		{ TEXT("HAIVEN_DEMO_BASE_URL"), &BaseUrl },
+		{ TEXT("HAIVEN_DEMO_REALTIME_URL"), &RealtimeUrl },
+		{ TEXT("HAIVEN_DEMO_APP_ID"), &AppId },
+		{ TEXT("HAIVEN_DEMO_INTEGRATION_ID"), &IntegrationId },
+		{ TEXT("HAIVEN_DEMO_CHANNEL_ID"), &ChannelId },
+		{ TEXT("HAIVEN_DEMO_REWARD_REF"), &RewardRef },
+		// Later names win: the haiven-lyra assembler's names over Boss Room's and legacy ones.
+		{ TEXT("HAIVEN_DEMO_LOGIN_ENTRY_URL"), &LoginEntryUrl },
+		{ TEXT("HAIVEN_DEMO_SIGN_IN_URL"), &LoginEntryUrl },
+		{ TEXT("HAIVEN_DEMO_REDIRECT_URI"), &LoginRedirectUrl },
+		{ TEXT("HAIVEN_DEMO_LOGIN_REDIRECT_URL"), &LoginRedirectUrl },
+	};
+	TArray<FString> Applied;
+	for (const TPair<const TCHAR*, FString*>& Override : Overrides)
+	{
+		const FString Value = Read(Override.Key).TrimStartAndEnd();
+		if (Value.IsEmpty()) continue;
+		*Override.Value = Value;
+		Applied.Add(Override.Key);
+	}
+	// Names only: values can identify a private stack and never go to the log.
+	if (Applied.Num() > 0)
+	{
+		UE_LOG(LogHaivenLyraDemoSettings, Log, TEXT("Haiven Lyra Demo settings from the environment: %s"),
+			*FString::Join(Applied, TEXT(", ")));
+	}
+	return Applied;
+}
+
 bool UHaivenLyraDemoSettings::IsSupportedChatWidgetClass(const UClass* Candidate)
 {
 	return Candidate

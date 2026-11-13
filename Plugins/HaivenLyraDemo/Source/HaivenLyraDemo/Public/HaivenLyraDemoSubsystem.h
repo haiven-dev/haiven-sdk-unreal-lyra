@@ -44,6 +44,7 @@ struct FHaivenHttpResult;
 struct FHaivenOutgoingChatMessage;
 struct FHaivenMotd;
 struct FHaivenRestAccountEntitlementsResponse;
+struct FHaivenRestFetchMessagesResponse;
 struct FHaivenRestCurrentUserSessionResponse;
 
 /** An active item entitlement this session has not granted yet; Code is the entitlement code. */
@@ -178,6 +179,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Haiven|Lyra Demo|MOTD")
 	void DismissMotd();
 
+	/**
+	 * Re-reads the public message of the day in the background, as the running
+	 * game does every MotdRefreshSeconds and when it regains focus. The shown
+	 * message stays up while it loads, and a failed read keeps it.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Lyra Demo|MOTD")
+	void RefreshMotd();
+
+	/** How often a running game re-reads the message of the day, as in the Boss Room demo. */
+	static constexpr float MotdRefreshSeconds = 30.0f;
+
 	/** The signed-in player's display name or username; empty until GET /users/me answers. */
 	UFUNCTION(BlueprintPure, Category = "Haiven|Lyra Demo|Status")
 	FString GetAccountName() const { return AccountName; }
@@ -255,6 +267,12 @@ private:
 	void HandleRealtimeState(EHaivenRealtimeState State);
 
 	UFUNCTION()
+	void HandleChatHistory(const FHaivenHttpResult& Result, const FHaivenRestFetchMessagesResponse& Response);
+
+	UFUNCTION()
+	void HandleChatHistoryFailed(const FHaivenHttpResult& Result);
+
+	UFUNCTION()
 	void HandleEntitlementsUpdated(const FHaivenEntitlementsUpdatedV0& Payload);
 
 	UFUNCTION()
@@ -293,10 +311,21 @@ private:
 	void UpdateExpiry(const FDateTime& Now);
 	void Expire();
 	void RefreshAccount();
+	/**
+	 * With HAIVEN_DEMO_CHAT_HISTORY set to a true flag, as in the Boss Room
+	 * demo, shows the channel's last ChatHistoryLimit messages once after the
+	 * first connect, oldest first, skipping any message already on screen.
+	 */
+	void LoadChatHistory();
 	void Note(const FText& Line) const;
 	void ApplyMotdPresentation() const;
 	/** Start the public MOTD read and show its loading state. */
 	void StartMotdRead();
+	/** Re-read the MOTD every MotdRefreshSeconds until Deinitialize. */
+	void StartMotdRefresh();
+	void StopMotdRefresh();
+	/** Regaining focus re-reads the MOTD, as in the Boss Room demo. */
+	void HandleApplicationActivation(bool bActive);
 	void ApplyStatus();
 	void HandleNetworkFailure(
 		UWorld* World,
@@ -330,6 +359,14 @@ private:
 	FHaivenLyraMotdState MotdState;
 	FString MotdRequestId;
 	uint64 MotdRequestSequence = 0;
+	/** The MOTD read in flight is a background refresh, not the first load. */
+	bool bMotdRefreshRead = false;
+	bool bChatHistoryRequested = false;
+	/** Server ids of chat messages already shown, so history does not repeat them. */
+	TSet<FString> ShownMessageIds;
+	static constexpr int64 ChatHistoryLimit = 20;
+	FTSTicker::FDelegateHandle MotdRefreshTicker;
+	FDelegateHandle ActivationHandle;
 	bool bChatFocused = false;
 	EHaivenLyraSignInState SignInState = EHaivenLyraSignInState::SignedOut;
 	FString SignInError;

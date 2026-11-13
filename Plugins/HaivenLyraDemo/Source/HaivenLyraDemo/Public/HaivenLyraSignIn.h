@@ -18,6 +18,14 @@ namespace HaivenLyraSignIn
 	 */
 	HAIVENLYRADEMO_API bool DemoTokenExpiryMetadata(const FString& Value, FDateTime& OutExpiresAtUtc);
 
+	/**
+	 * The local expiry of HAIVEN_DEMO_ACCESS_TOKEN. Unset metadata means an
+	 * undated token, which never expires locally (FDateTime::MaxValue), as in
+	 * the Boss Room demo; the server still ends it with a 401. Set metadata
+	 * must parse, or this returns false.
+	 */
+	HAIVENLYRADEMO_API bool DemoTokenExpiry(const FString& Value, FDateTime& OutExpiresAtUtc);
+
 	/** The game login for the configured integration, entry page and loopback redirect. */
 	HAIVENLYRADEMO_API FHaivenGameLoginOptions LoginOptions(const UHaivenLyraDemoSettings& Settings);
 }

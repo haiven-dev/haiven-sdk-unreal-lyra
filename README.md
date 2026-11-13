@@ -47,3 +47,45 @@ default experience as a local match, without an Epic lobby, so the shooter can
 be played the way Boss Room can be played after Host. Chat and rewards stay on
 edge handles and do not take the mouse. Without the Fab content, PLAY reports
 that no gameplay experience is loaded.
+
+## Configuring from the Boss Room environment
+
+The demo reads the same `HAIVEN_DEMO_*` variables as the Boss Room demo, so one
+`.env` file configures both. A non-empty variable replaces its Project Settings
+value (`[/Script/HaivenLyraDemo.HaivenLyraDemoSettings]` in `DefaultGame.ini`)
+for that run; an unset one keeps it.
+
+| Variable | Setting |
+| --- | --- |
+| `HAIVEN_DEMO_BASE_URL` | `BaseUrl` |
+| `HAIVEN_DEMO_REALTIME_URL` | `RealtimeUrl` |
+| `HAIVEN_DEMO_APP_ID` | `AppId` |
+| `HAIVEN_DEMO_INTEGRATION_ID` | `IntegrationId` |
+| `HAIVEN_DEMO_CHANNEL_ID` | `ChannelId` |
+| `HAIVEN_DEMO_REWARD_REF` | `RewardRef` |
+| `HAIVEN_DEMO_SIGN_IN_URL` (legacy `HAIVEN_DEMO_LOGIN_ENTRY_URL`) | `LoginEntryUrl` |
+| `HAIVEN_DEMO_LOGIN_REDIRECT_URL`, else Boss Room's `HAIVEN_DEMO_REDIRECT_URI` | `LoginRedirectUrl` |
+
+`HAIVEN_DEMO_ACCESS_TOKEN` skips the browser sign-in. Without
+`HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT` the token is undated and never expires
+locally, as in Boss Room; the server still ends it with a 401. Load the file
+into the shell that starts the editor:
+
+```sh
+set -a; source <path to>/.env; set +a
+UnrealEditor "$PWD/Lyra.uproject"
+```
+
+`HAIVEN_DEMO_CHAT_HISTORY=true` shows the channel's last 20 messages once after
+the first connect, oldest first, as Boss Room's chat history opt-in does.
+
+The message of the day is re-read every 30 seconds and when the game regains
+focus. The message stays up while it loads, and a failed read keeps it.
+
+## Match reward
+
+Lyra's counterpart of Boss Room's victory reward: this player's first
+elimination in a session claims the configured `RewardRef` once, with the same
+reward states as the **Claim reward** button. Signed out, the claim waits until
+the player signs in. Lyra broadcasts eliminations on the server, so the reward
+fires for the host and for an offline match started with **PLAY**.

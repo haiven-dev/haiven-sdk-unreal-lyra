@@ -58,6 +58,17 @@ public:
 	void Restore(const FHaivenLyraMotdProjection& Value);
 
 	bool LoadStarted(const FString& RequestId);
+	/**
+	 * A background re-read of the public message. Unlike LoadStarted it leaves
+	 * the shown state in place, so a running game picks up a new or ended
+	 * message without a loading flash. Always returns false: nothing changed.
+	 */
+	bool RefreshStarted(const FString& RequestId);
+	/**
+	 * A failed background re-read keeps the message already shown. It only
+	 * settles a load it superseded, which would otherwise stay loading.
+	 */
+	bool RefreshFailure(const FString& RequestId);
 	bool RestAbsent(const FString& RequestId);
 	bool RestPresent(const FString& RequestId, const FHaivenMotd& Message);
 	bool RestFailure(const FString& RequestId);

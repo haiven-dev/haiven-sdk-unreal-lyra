@@ -33,6 +33,7 @@
 #include "HaivenLyraEntitlements.h"
 #include "HaivenChat.h"
 #include "HaivenClientTypes.h"
+#include "HaivenLyraMotdProjection.h"
 #include "HaivenLyraMotdWidget.h"
 #include "HaivenLyraPresentation.h"
 #include "HaivenLyraSignIn.h"
@@ -512,6 +513,10 @@ bool FHaivenLyraDemoSignInTest::RunTest(const FString& Parameters)
 		HaivenLyraSignIn::DemoTokenExpiryMetadata(TEXT("header.eyJleHAiOjF9.signature"), ParsedExpiry));
 	TestFalse(TEXT("missing expiry metadata is rejected"),
 		HaivenLyraSignIn::DemoTokenExpiryMetadata(TEXT(""), ParsedExpiry));
+	TestTrue(TEXT("an unset expiry is an undated token"), HaivenLyraSignIn::DemoTokenExpiry(TEXT(""), ParsedExpiry));
+	TestEqual(TEXT("an undated token never expires locally"), ParsedExpiry, FDateTime::MaxValue());
+	TestFalse(TEXT("set but malformed expiry metadata is still rejected"),
+		HaivenLyraSignIn::DemoTokenExpiry(TEXT("header.eyJleHAiOjF9.signature"), ParsedExpiry));
 
 	// The state machine, against a real Haiven subsystem with no browser.
 	UHaivenLyraDemoSettings* Settings = GetMutableDefault<UHaivenLyraDemoSettings>();
@@ -617,14 +622,21 @@ bool FHaivenLyraDemoSignInTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("an unconfigured sign-in fails visibly"), Demo->GetSignInState() == EHaivenLyraSignInState::Failed);
 	TestEqual(TEXT("an unconfigured sign-in never opens the browser"), Launches, 4);
 
-	// The environment shortcut requires explicit expiry and treats its bearer as opaque.
+	// The environment shortcut takes expiry only from metadata and treats its bearer as opaque.
 	Settings->RealtimeUrl = TEXT("ws://127.0.0.1:9/v0/ws");
 	Settings->AppId = TEXT("lyra-test");
 	Settings->ChannelId = TEXT("general");
 	FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN"), TEXT("header.eyJleHAiOjF9.signature"));
+	FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT"), TEXT("not-a-date"));
+	Demo->Connect();
+	TestTrue(TEXT("malformed expiry metadata rejects an environment token"), Demo->GetSignInState() == EHaivenLyraSignInState::Failed);
 	FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT"), TEXT(""));
 	Demo->Connect();
-	TestTrue(TEXT("missing expiry metadata rejects an environment token"), Demo->GetSignInState() == EHaivenLyraSignInState::Failed);
+	TestTrue(TEXT("an undated demo token signs in, as in Boss Room"), Demo->GetSignInState() == EHaivenLyraSignInState::SignedIn);
+	TestEqual(TEXT("an undated demo token never expires locally"), Demo->GetSignInExpiresAtUtc(), FDateTime::MaxValue());
+	Haiven->DisconnectRealtime();
+	Demo->CancelPendingRealtimeConnect();
+	Haiven->Logout();
 	const FDateTime Past = FDateTime::FromUnixTimestamp(FDateTime::UtcNow().ToUnixTimestamp() - 60);
 	FPlatformMisc::SetEnvironmentVar(TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT"), *Past.ToIso8601());
 	Demo->Connect();
@@ -688,6 +700,91 @@ bool FHaivenLyraDemoAnalyticsTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("playtime is capped at one day"), Events[5].Value.Contains(TEXT("86400.000")));
 	TestEqual(TEXT("failed reconnect reports health error"), Types[6], FString(TEXT("sdk.health")));
 	TestTrue(TEXT("failed reconnect has no player data"), Events[6].Value.Contains(TEXT("\"error\"")));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FHaivenLyraDemoEnvironmentTest,
+	"Haiven.LyraDemo.EnvironmentSettings",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FHaivenLyraDemoEnvironmentTest::RunTest(const FString& Parameters)
+{
+	UHaivenLyraDemoSettings* Settings = NewObject<UHaivenLyraDemoSettings>();
+	Settings->BaseUrl = TEXT("http://127.0.0.1:9/v0");
+	Settings->AppId = TEXT("from-ini");
+	Settings->RewardRef = TEXT("ini/reward");
+	const TMap<FString, FString> Environment = {
+		{ TEXT("HAIVEN_DEMO_BASE_URL"), TEXT(" https://api.example.test/v0 ") },
+		{ TEXT("HAIVEN_DEMO_REALTIME_URL"), TEXT("wss://api.example.test/v0/ws") },
+		{ TEXT("HAIVEN_DEMO_CHANNEL_ID"), TEXT("channel-1") },
+		{ TEXT("HAIVEN_DEMO_SIGN_IN_URL"), TEXT("https://app.example.test/connect/game") },
+		{ TEXT("HAIVEN_DEMO_APP_ID"), TEXT("  ") },
+		{ TEXT("HAIVEN_DEMO_REDIRECT_URI"), TEXT("http://127.0.0.1:47615/haiven/callback") },
+		{ TEXT("HAIVEN_DEMO_LOGIN_REDIRECT_URL"), TEXT("http://127.0.0.1:28823/haiven/callback") },
+	};
+	const TArray<FString> Applied = Settings->ApplyEnvironmentOverrides([&Environment](const TCHAR* Name)
+	{
+		const FString* Value = Environment.Find(Name);
+		return Value ? *Value : FString();
+	});
+	TestEqual(TEXT("six variables applied"), Applied.Num(), 6);
+	TestEqual(TEXT("the assembler's redirect name wins over Boss Room's"),
+		Settings->LoginRedirectUrl, FString(TEXT("http://127.0.0.1:28823/haiven/callback")));
+	TestEqual(TEXT("BASE_URL replaces the ini value, trimmed"), Settings->BaseUrl, FString(TEXT("https://api.example.test/v0")));
+	TestEqual(TEXT("REALTIME_URL fills an empty setting"), Settings->RealtimeUrl, FString(TEXT("wss://api.example.test/v0/ws")));
+	TestEqual(TEXT("CHANNEL_ID applies"), Settings->ChannelId, FString(TEXT("channel-1")));
+	TestEqual(TEXT("SIGN_IN_URL is the login entry page"), Settings->LoginEntryUrl, FString(TEXT("https://app.example.test/connect/game")));
+	TestEqual(TEXT("a blank variable keeps the ini value"), Settings->AppId, FString(TEXT("from-ini")));
+	TestEqual(TEXT("an unset variable keeps the ini value"), Settings->RewardRef, FString(TEXT("ini/reward")));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FHaivenLyraDemoMotdRefreshTest,
+	"Haiven.LyraDemo.MotdRefresh",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FHaivenLyraDemoMotdRefreshTest::RunTest(const FString& Parameters)
+{
+	FHaivenMotd Message;
+	Message.Id = TEXT("motd-1");
+	Message.bHasTitle = true;
+	Message.Title = TEXT("Season one");
+	Message.Body = TEXT("Now live.");
+
+	FHaivenLyraMotdState State;
+	TestTrue(TEXT("first load shows loading"), State.LoadStarted(TEXT("a")));
+	TestTrue(TEXT("first load presents"), State.RealtimePresent(Message));
+	const int64 Shown = State.GetProjection().Revision;
+
+	TestFalse(TEXT("a refresh changes nothing while it loads"), State.RefreshStarted(TEXT("b")));
+	TestTrue(TEXT("the message stays up during a refresh"),
+		State.GetProjection().Status == EHaivenLyraMotdPresentationState::Present);
+	TestFalse(TEXT("the same message is not presented again"), State.RealtimePresent(Message));
+	TestEqual(TEXT("no new revision for an unchanged message"), State.GetProjection().Revision, Shown);
+
+	State.RefreshStarted(TEXT("c"));
+	TestFalse(TEXT("a failed refresh keeps the shown message"), State.RefreshFailure(TEXT("c")));
+	TestTrue(TEXT("still present after a failed refresh"),
+		State.GetProjection().Status == EHaivenLyraMotdPresentationState::Present);
+
+	FHaivenMotd Next = Message;
+	Next.Id = TEXT("motd-2");
+	Next.Title = TEXT("Season two");
+	State.RefreshStarted(TEXT("d"));
+	TestTrue(TEXT("a refresh picks up a new message"), State.RealtimePresent(Next));
+	TestEqual(TEXT("the new message is shown"), State.GetProjection().Message->Title, FString(TEXT("Season two")));
+	State.RefreshStarted(TEXT("e"));
+	TestTrue(TEXT("a refresh picks up an ended message"), State.RealtimeClear());
+
+	FHaivenLyraMotdState Loading;
+	Loading.LoadStarted(TEXT("f"));
+	Loading.RefreshStarted(TEXT("g"));
+	TestTrue(TEXT("a failed refresh settles the load it superseded"), Loading.RefreshFailure(TEXT("g")));
+	TestTrue(TEXT("that load ends as a failure, not loading"),
+		Loading.GetProjection().Status == EHaivenLyraMotdPresentationState::Failure);
+	TestFalse(TEXT("a stale refresh failure is ignored"), Loading.RefreshFailure(TEXT("f")));
 	return true;
 }
 

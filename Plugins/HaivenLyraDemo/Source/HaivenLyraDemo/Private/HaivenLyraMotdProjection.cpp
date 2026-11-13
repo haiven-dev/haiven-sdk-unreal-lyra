@@ -61,6 +61,21 @@ bool FHaivenLyraMotdState::LoadStarted(const FString& RequestId)
 	return true;
 }
 
+bool FHaivenLyraMotdState::RefreshStarted(const FString& RequestId)
+{
+	bHasActiveRequest = true;
+	ActiveRequestId = RequestId;
+	return false;
+}
+
+bool FHaivenLyraMotdState::RefreshFailure(const FString& RequestId)
+{
+	if (!IsCurrentRequest(RequestId)) return false;
+	ClearActiveRequest();
+	if (Projection.Status != EHaivenLyraMotdPresentationState::Loading) return false;
+	return PresentFailure();
+}
+
 bool FHaivenLyraMotdState::RestAbsent(const FString& RequestId)
 {
 	if (!IsCurrentRequest(RequestId)) return false;

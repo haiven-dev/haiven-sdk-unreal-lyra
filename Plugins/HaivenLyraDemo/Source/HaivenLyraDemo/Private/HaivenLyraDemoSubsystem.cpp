@@ -80,6 +80,11 @@ namespace
 void UHaivenLyraDemoSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	// The same HAIVEN_DEMO_* environment as the Boss Room demo, before anything reads the settings.
+	GetMutableDefault<UHaivenLyraDemoSettings>()->ApplyEnvironmentOverrides([](const TCHAR* Name)
+	{
+		return FPlatformMisc::GetEnvironmentVariable(Name);
+	});
 	HostLossState = MakeShared<FHaivenLyraHostLossState>();
 	if (GEngine)
 	{
@@ -108,6 +113,8 @@ void UHaivenLyraDemoSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		ChatInput = MakeShared<FHaivenLyraChatInput>(this);
 		FSlateApplication::Get().RegisterInputPreProcessor(ChatInput);
+		ActivationHandle = FSlateApplication::Get().OnApplicationActivationStateChanged().AddUObject(
+			this, &UHaivenLyraDemoSubsystem::HandleApplicationActivation);
 	}
 	Connect();
 }
@@ -124,6 +131,12 @@ void UHaivenLyraDemoSubsystem::Deinitialize()
 	{
 		FSlateApplication::Get().UnregisterInputPreProcessor(ChatInput);
 	}
+	if (ActivationHandle.IsValid() && FSlateApplication::IsInitialized())
+	{
+		FSlateApplication::Get().OnApplicationActivationStateChanged().Remove(ActivationHandle);
+	}
+	ActivationHandle.Reset();
+	StopMotdRefresh();
 	ChatInput.Reset();
 	ClearExpiryCheck();
 	CancelPendingRealtimeConnect();
@@ -199,6 +212,7 @@ void UHaivenLyraDemoSubsystem::Connect()
 	else
 	{
 		StartMotdRead();
+		StartMotdRefresh();
 	}
 
 	if (!Settings->IsRealtimeConfigured())
@@ -225,15 +239,17 @@ void UHaivenLyraDemoSubsystem::Connect()
 		return;
 	}
 
-	// Environment shortcuts must carry separate expiry metadata. The bearer is
-	// opaque: do not decode a JWT-shaped value or assume a lifetime.
+	// Expiry comes from separate metadata, never from the bearer: do not decode
+	// a JWT-shaped value or assume a lifetime. Without metadata the token is
+	// undated and never expires locally, as in the Boss Room demo, so the same
+	// .env drives both; the server still ends it with a 401.
 	const FDateTime Now = FDateTime::UtcNow();
 	FDateTime ExpiresAtUtc;
 	const FString Expiry = FPlatformMisc::GetEnvironmentVariable(TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT"));
-	if (!HaivenLyraSignIn::DemoTokenExpiryMetadata(Expiry, ExpiresAtUtc))
+	if (!HaivenLyraSignIn::DemoTokenExpiry(Expiry, ExpiresAtUtc))
 	{
 		SetSignInState(EHaivenLyraSignInState::Failed,
-			TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT must be an ISO-8601 UTC instant. The bearer remains opaque."));
+			TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT must be an ISO-8601 UTC instant or unset. The bearer remains opaque."));
 		return;
 	}
 	if (ExpiresAtUtc <= Now)
@@ -251,7 +267,8 @@ void UHaivenLyraDemoSubsystem::Connect()
 	// Connect on the next tick, not here: this runs while the engine starts or
 	// PIE loads its world, and that load holds the game thread for seconds. The
 	// server closes a socket whose first frame (auth, sent from the game thread)
-	// has not arrived within 5 seconds, and the plugin does not reconnect.
+	// has not arrived within 5 seconds. The plugin reconnects after a dropped
+	// socket, but a first connect that never authenticates is not a drop.
 	PendingRealtimeConnect = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
 	{
 		PendingRealtimeConnect.Reset();
@@ -276,9 +293,45 @@ void UHaivenLyraDemoSubsystem::CancelPendingRealtimeConnect()
 void UHaivenLyraDemoSubsystem::StartMotdRead()
 {
 	MotdRequestId = FString::Printf(TEXT("lyra-motd-%llu"), ++MotdRequestSequence);
+	bMotdRefreshRead = false;
 	MotdState.LoadStarted(MotdRequestId);
 	ApplyMotdPresentation();
 	Haiven->LoadMotd(GetDefault<UHaivenLyraDemoSettings>()->IntegrationId);
+}
+
+void UHaivenLyraDemoSubsystem::RefreshMotd()
+{
+	const FString& IntegrationId = GetDefault<UHaivenLyraDemoSettings>()->IntegrationId;
+	if (!Haiven || IntegrationId.IsEmpty()) return;
+	MotdRequestId = FString::Printf(TEXT("lyra-motd-%llu"), ++MotdRequestSequence);
+	bMotdRefreshRead = true;
+	MotdState.RefreshStarted(MotdRequestId);
+	Haiven->LoadMotd(IntegrationId);
+}
+
+void UHaivenLyraDemoSubsystem::StartMotdRefresh()
+{
+	StopMotdRefresh();
+	MotdRefreshTicker = FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateWeakLambda(this, [this](float)
+		{
+			RefreshMotd();
+			return true;
+		}),
+		MotdRefreshSeconds);
+}
+
+void UHaivenLyraDemoSubsystem::StopMotdRefresh()
+{
+	if (!MotdRefreshTicker.IsValid()) return;
+	FTSTicker::GetCoreTicker().RemoveTicker(MotdRefreshTicker);
+	MotdRefreshTicker.Reset();
+}
+
+void UHaivenLyraDemoSubsystem::HandleApplicationActivation(bool bActive)
+{
+	// Only a game that already read the MOTD refreshes; a missing setting stays a failure.
+	if (bActive && MotdRefreshTicker.IsValid()) RefreshMotd();
 }
 
 bool UHaivenLyraDemoSubsystem::CanSignIn() const
@@ -395,6 +448,8 @@ void UHaivenLyraDemoSubsystem::EnterSignedIn(const FDateTime& ExpiresAtUtc)
 void UHaivenLyraDemoSubsystem::ScheduleExpiryCheck()
 {
 	ClearExpiryCheck();
+	// An undated bearer never expires locally; the server ends it with a 401.
+	if (SignInExpiresAtUtc == FDateTime::MaxValue()) return;
 	const double Seconds = FMath::Max(0.5, (SignInExpiresAtUtc - FDateTime::UtcNow()).GetTotalSeconds() + 0.5);
 	ExpiryCheck = FTSTicker::GetCoreTicker().AddTicker(
 		FTickerDelegate::CreateWeakLambda(this, [this](float)
@@ -638,7 +693,52 @@ void UHaivenLyraDemoSubsystem::HandleChatMessage(const FHaivenChatMessageV0& Mes
 	{
 		Name = !Message.Author.DisplayName.IsEmpty() ? Message.Author.DisplayName : Message.Author.Username;
 	}
+	if (!Message.Id.IsEmpty()) ShownMessageIds.Add(Message.Id);
 	Note(FText::Format(NSLOCTEXT("HaivenLyraDemo", "Incoming", "{0}: {1}"), FText::FromString(Name), FText::FromString(Message.Content)));
+}
+
+void UHaivenLyraDemoSubsystem::LoadChatHistory()
+{
+	if (bChatHistoryRequested || !Haiven || !GetLocalPlayer() || ChannelId.IsEmpty()) return;
+	if (!FHaivenLyraDemoAnalytics::IsEnabledValue(FPlatformMisc::GetEnvironmentVariable(TEXT("HAIVEN_DEMO_CHAT_HISTORY")))) return;
+	UHaivenRestGetChatChannelsChannelIdMessagesAsyncAction* Read =
+		UHaivenRestGetChatChannelsChannelIdMessagesAsyncAction::RestGetChatChannelsChannelIdMessages(
+			GetLocalPlayer(), Haiven, ChannelId, false, FString(), false, FString(), true, ChatHistoryLimit, false, FString());
+	if (!Read) return;
+	bChatHistoryRequested = true;
+	Read->Completed.AddDynamic(this, &UHaivenLyraDemoSubsystem::HandleChatHistory);
+	Read->Failed.AddDynamic(this, &UHaivenLyraDemoSubsystem::HandleChatHistoryFailed);
+	Read->Activate();
+}
+
+void UHaivenLyraDemoSubsystem::HandleChatHistory(const FHaivenHttpResult& Result, const FHaivenRestFetchMessagesResponse& Response)
+{
+	if (!Response.bHasMessages || Response.Messages.Num() == 0) return;
+	Note(NSLOCTEXT("HaivenLyraDemo", "HistoryHeading", "Earlier in chat:"));
+	// The API lists newest first; the panel shows oldest first.
+	for (int32 Index = Response.Messages.Num() - 1; Index >= 0; --Index)
+	{
+		const FHaivenRestMessageResponse& Message = Response.Messages[Index];
+		if (!Message.bHasContent || Message.Content.IsEmpty()) continue;
+		if (Message.bHasId && !Message.Id.IsEmpty())
+		{
+			if (ShownMessageIds.Contains(Message.Id)) continue;
+			ShownMessageIds.Add(Message.Id);
+		}
+		FString Name = TEXT("someone");
+		if (Message.bHasAuthor)
+		{
+			Name = !Message.Author.DisplayName.IsEmpty() ? Message.Author.DisplayName : Message.Author.Username;
+		}
+		Note(FText::Format(NSLOCTEXT("HaivenLyraDemo", "History", "{0}: {1}"), FText::FromString(Name), FText::FromString(Message.Content)));
+	}
+}
+
+void UHaivenLyraDemoSubsystem::HandleChatHistoryFailed(const FHaivenHttpResult& Result)
+{
+	// A later connect may try again; live chat is unaffected.
+	bChatHistoryRequested = false;
+	UE_LOG(LogHaivenLyraDemo, Warning, TEXT("chat history read failed (HTTP %d)"), Result.StatusCode);
 }
 
 void UHaivenLyraDemoSubsystem::HandleOutgoingChat(const FHaivenOutgoingChatMessage& Message)
@@ -658,6 +758,7 @@ void UHaivenLyraDemoSubsystem::HandleRealtimeState(EHaivenRealtimeState State)
 		Note(NSLOCTEXT("HaivenLyraDemo", "Ready", "Haiven chat connected. Press Enter to talk."));
 		RefreshAccount();
 		RefreshEntitlements();
+		LoadChatHistory();
 		break;
 	case EHaivenRealtimeState::Disconnected:
 		if (DemoAnalytics) DemoAnalytics->Disconnected();
@@ -860,14 +961,16 @@ void UHaivenLyraDemoSubsystem::Note(const FText& Line) const
 
 void UHaivenLyraDemoSubsystem::HandleMotdChanged(bool bHasMessage, const FHaivenMotd& Message)
 {
-	if (bHasMessage) MotdState.RealtimePresent(Message);
-	else MotdState.RealtimeClear();
-	ApplyMotdPresentation();
+	const bool bChanged = bHasMessage ? MotdState.RealtimePresent(Message) : MotdState.RealtimeClear();
+	// A background refresh that finds the same message re-presents nothing, so
+	// a message the player has already read is not marked unread again.
+	if (bChanged || !bMotdRefreshRead) ApplyMotdPresentation();
 }
 
 void UHaivenLyraDemoSubsystem::HandleMotdLoadFailed()
 {
-	MotdState.RestFailure(MotdRequestId);
+	if (bMotdRefreshRead) MotdState.RefreshFailure(MotdRequestId);
+	else MotdState.RestFailure(MotdRequestId);
 	ApplyMotdPresentation();
 }
 
