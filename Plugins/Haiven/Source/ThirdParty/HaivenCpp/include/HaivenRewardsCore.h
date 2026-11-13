@@ -3,6 +3,8 @@
 #include "Contracts/HaivenRestJson.h"
 #include "HaivenRestApi.h"
 
+#include "HaivenJson.h"
+
 #include <array>
 #include <cstdint>
 #include <functional>
@@ -11,6 +13,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace Haiven
 {
@@ -131,7 +134,18 @@ namespace Haiven
 	}
 
 	/**
-	 * Subscriber-reward claims (HAVN-1179), engine-free: the C++ counterpart of
+	 * One reward the player asked for before a Haiven account was linked.
+	 * Local only: it is not a recorded claim, and it is not loot.
+	 */
+	struct FSavedRewardClaim
+	{
+		std::string ClaimId;
+		std::string IntegrationId;
+		std::string RewardRef;
+	};
+
+	/**
+	 * Subscriber-reward claims, engine-free: the C++ counterpart of
 	 * the .NET and JavaScript SDKs' reward clients, and the core the Unreal
 	 * plugin's Claim Reward node drives.
 	 *
@@ -142,6 +156,13 @@ namespace Haiven
 	 * the id of every claim that has not reached a final answer, keyed by
 	 * integration and reward, and hands the same id to the next attempt; a final
 	 * answer (recorded, or refused) releases it.
+	 *
+	 * Save records that id before linking and does not post it. The host keeps
+	 * ExportSaved across launches. After the login handoff, SubmitSavedRequests
+	 * posts each saved id on the same user claim route. Succeeded is the only
+	 * signal that the server recorded the claim; Save never sets it, so loot
+	 * waits for that reply. Clearing the signed-in player drops in-flight ids
+	 * and leaves saved intents, so the next link retries the same claim id.
 	 *
 	 * Like the chat core it performs no I/O: build a request here, send it with
 	 * the host's HTTP stack, and pass the status and body back. A game server
@@ -168,10 +189,108 @@ namespace Haiven
 			if (IntegrationId.empty()) throw std::invalid_argument("haiven: integrationId is required");
 			if (RewardRef.empty() || Utf8CodePointCount(RewardRef) > 128) throw std::invalid_argument("haiven: rewardRef must be 1 to 128 characters");
 			RestTypes::ClaimRewardRequest Body;
-			Body.ClaimId = PendingClaimId(IntegrationId, RewardRef);
+			Body.ClaimId = ClaimIdFor(IntegrationId, RewardRef);
 			Body.IntegrationId = IntegrationId;
 			Body.RewardRef = RewardRef;
 			return Rest::PostUsersMeRewardsClaims(ContractsJson::ToJson(Body));
+		}
+
+		/**
+		 * Records a claim intent before the player links. Mints a claim id once,
+		 * or reuses the id already saved or pending for this reward. Does not
+		 * build a request and does not report the claim as recorded.
+		 */
+		FSavedRewardClaim Save(const std::string& IntegrationId, const std::string& RewardRef)
+		{
+			if (IntegrationId.empty()) throw std::invalid_argument("haiven: integrationId is required");
+			if (RewardRef.empty() || Utf8CodePointCount(RewardRef) > 128) throw std::invalid_argument("haiven: rewardRef must be 1 to 128 characters");
+			const int Existing = FindSaved(IntegrationId, RewardRef);
+			if (Existing >= 0) return SavedIntents[static_cast<std::size_t>(Existing)];
+			FSavedRewardClaim Saved;
+			Saved.IntegrationId = IntegrationId;
+			Saved.RewardRef = RewardRef;
+			const auto Pending = PendingIds.find(Key(IntegrationId, RewardRef));
+			if (Pending != PendingIds.end()) Saved.ClaimId = Pending->second;
+			else Saved.ClaimId = MintClaimId();
+			SavedIntents.push_back(Saved);
+			return Saved;
+		}
+
+		/** Saved intents in the order they were first recorded. */
+		const std::vector<FSavedRewardClaim>& Saved() const { return SavedIntents; }
+
+		/**
+		 * The saved intents as a JSON array of {claimId, integrationId, rewardRef}.
+		 * The host writes this and passes it back to ImportSaved after a restart.
+		 * An empty list is `[]`.
+		 */
+		std::string ExportSaved() const
+		{
+			FJson Array;
+			Array.Kind = FJson::EKind::Array;
+			for (const FSavedRewardClaim& Saved : SavedIntents)
+			{
+				FJson Object = FJson::MakeObject();
+				Object.Set("claimId", FJson::MakeString(Saved.ClaimId));
+				Object.Set("integrationId", FJson::MakeString(Saved.IntegrationId));
+				Object.Set("rewardRef", FJson::MakeString(Saved.RewardRef));
+				Array.Items.push_back(std::move(Object));
+			}
+			return Array.Dump();
+		}
+
+		/**
+		 * Replaces saved intents with a document from ExportSaved.
+		 * A document that is not that array leaves the current intents in place.
+		 * The first entry for an integration and reward wins, so a later duplicate
+		 * cannot remint the claim id.
+		 */
+		bool ImportSaved(const std::string& Document, std::string& Error)
+		{
+			FJson Root;
+			if (!FJson::Parse(Document, Root, Error) || Root.Kind != FJson::EKind::Array)
+			{
+				if (Error.empty()) Error = "saved reward claims must be a JSON array";
+				return false;
+			}
+			std::vector<FSavedRewardClaim> Imported;
+			for (const FJson& Item : Root.Items)
+			{
+				if (Item.Kind != FJson::EKind::Object) continue;
+				FSavedRewardClaim Saved;
+				Saved.ClaimId = Item.StringOr("claimId");
+				Saved.IntegrationId = Item.StringOr("integrationId");
+				Saved.RewardRef = Item.StringOr("rewardRef");
+				if (Saved.ClaimId.empty() || Saved.IntegrationId.empty() || Saved.RewardRef.empty()) continue;
+				if (Utf8CodePointCount(Saved.RewardRef) > 128) continue;
+				if (FindIn(Imported, Saved.IntegrationId, Saved.RewardRef) >= 0) continue;
+				Imported.push_back(std::move(Saved));
+			}
+			SavedIntents = std::move(Imported);
+			Error.clear();
+			return true;
+		}
+
+		/**
+		 * One POST /users/me/rewards/claims per saved intent, each under its saved
+		 * claim id. Does not drop the intent: HandleClaimReply does that when the
+		 * reply is final. A retryable reply keeps the id for the next submit.
+		 */
+		std::vector<Rest::FRestRequest> SubmitSavedRequests()
+		{
+			std::vector<Rest::FRestRequest> Requests;
+			Requests.reserve(SavedIntents.size());
+			for (const FSavedRewardClaim& Saved : SavedIntents)
+			{
+				const std::string K = Key(Saved.IntegrationId, Saved.RewardRef);
+				if (PendingIds.find(K) == PendingIds.end()) PendingIds.emplace(K, Saved.ClaimId);
+				RestTypes::ClaimRewardRequest Body;
+				Body.ClaimId = Saved.ClaimId;
+				Body.IntegrationId = Saved.IntegrationId;
+				Body.RewardRef = Saved.RewardRef;
+				Requests.push_back(Rest::PostUsersMeRewardsClaims(ContractsJson::ToJson(Body)));
+			}
+			return Requests;
 		}
 
 		/** The claim id the next ClaimRequest for this reward will carry, if one is pending. */
@@ -201,6 +320,7 @@ namespace Haiven
 			{
 				const auto Found = PendingIds.find(Key(IntegrationId, RewardRef));
 				if (Found != PendingIds.end() && Found->second == RequestClaimId) PendingIds.erase(Found);
+				ReleaseSaved(IntegrationId, RewardRef, RequestClaimId);
 			}
 			return Outcome;
 		}
@@ -211,7 +331,11 @@ namespace Haiven
 		/** Forgets the pending claim id of a reward the game no longer claims. */
 		void Forget(const std::string& IntegrationId, const std::string& RewardRef) { PendingIds.erase(Key(IntegrationId, RewardRef)); }
 
-		/** Forgets every pending claim id: the player signed out. */
+		/**
+		 * Forgets every in-flight claim id: the player signed out. Saved intents
+		 * stay. They belong to the install until the server answers, and the next
+		 * link must submit the same claim id.
+		 */
 		void Clear()
 		{
 			PendingIds.clear();
@@ -305,18 +429,56 @@ namespace Haiven
 	private:
 		static std::string Key(const std::string& IntegrationId, const std::string& RewardRef) { return IntegrationId + '\n' + RewardRef; }
 
-		std::string PendingClaimId(const std::string& IntegrationId, const std::string& RewardRef)
+		static int FindIn(const std::vector<FSavedRewardClaim>& Intents, const std::string& IntegrationId, const std::string& RewardRef)
+		{
+			for (std::size_t Index = 0; Index < Intents.size(); ++Index)
+			{
+				if (Intents[Index].IntegrationId == IntegrationId && Intents[Index].RewardRef == RewardRef) return static_cast<int>(Index);
+			}
+			return -1;
+		}
+
+		int FindSaved(const std::string& IntegrationId, const std::string& RewardRef) const
+		{
+			return FindIn(SavedIntents, IntegrationId, RewardRef);
+		}
+
+		std::string MintClaimId()
+		{
+			std::string Id = NewClaimId();
+			if (Id.empty()) throw std::invalid_argument("haiven: claim id source returned an empty id");
+			return Id;
+		}
+
+		/** The id of an in-flight attempt, else the saved intent, else a new id kept for retry. */
+		std::string ClaimIdFor(const std::string& IntegrationId, const std::string& RewardRef)
 		{
 			const std::string K = Key(IntegrationId, RewardRef);
 			const auto Found = PendingIds.find(K);
 			if (Found != PendingIds.end()) return Found->second;
-			std::string Id = NewClaimId();
+			const int Saved = FindSaved(IntegrationId, RewardRef);
+			if (Saved >= 0)
+			{
+				const std::string& Id = SavedIntents[static_cast<std::size_t>(Saved)].ClaimId;
+				PendingIds.emplace(K, Id);
+				return Id;
+			}
+			std::string Id = MintClaimId();
 			PendingIds.emplace(K, Id);
 			return Id;
 		}
 
+		void ReleaseSaved(const std::string& IntegrationId, const std::string& RewardRef, const std::string& ClaimId)
+		{
+			const int Saved = FindSaved(IntegrationId, RewardRef);
+			if (Saved < 0) return;
+			if (SavedIntents[static_cast<std::size_t>(Saved)].ClaimId != ClaimId) return;
+			SavedIntents.erase(SavedIntents.begin() + Saved);
+		}
+
 		FClaimIdSource NewClaimId;
 		std::map<std::string, std::string> PendingIds;
+		std::vector<FSavedRewardClaim> SavedIntents;
 		std::uint64_t SessionGeneration = 0;
 	};
 }

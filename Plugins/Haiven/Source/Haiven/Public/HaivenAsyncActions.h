@@ -154,7 +154,7 @@ private:
 
 /**
  * Sign In With Haiven: one game login from the button press to a usable bearer.
- * A loopback Redirect Url (http://127.0.0.1:<port>/<path>) is received by the
+ * A loopback Redirect Url (`http://127.0.0.1:<port>/<path>`) is received by the
  * subsystem itself; any other registered redirect (a custom scheme or claimed
  * HTTPS link) still needs the host to pass the callback to Handle Game Login
  * Callback. Signed In carries only the expiry: the bearer stays in the

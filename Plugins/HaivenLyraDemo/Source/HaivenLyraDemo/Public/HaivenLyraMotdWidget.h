@@ -9,6 +9,7 @@
 #include "HaivenLyraMotdWidget.generated.h"
 
 class UButton;
+class UBorder;
 class UTextBlock;
 
 UCLASS(Blueprintable)
@@ -25,6 +26,9 @@ public:
 	void PresentAbsent();
 	void PresentMessage(const FHaivenMotd& Message);
 	void PresentFailure();
+
+	/** Collapses the MOTD drawer while retaining its handle. */
+	void CollapseDrawer();
 
 	/** Stable cross-engine state spelling used by tests and designer logic. */
 	UFUNCTION(BlueprintPure, Category = "Haiven|MOTD")
@@ -71,10 +75,31 @@ private:
 	UFUNCTION()
 	void HandleDismissClicked();
 
+	UFUNCTION()
+	void HandleToggleClicked();
+
+	UFUNCTION()
+	void HandleCollapseClicked();
+
 	void ApplyPresentation();
 
 	FHaivenLyraMotdState LocalState;
 	FHaivenLyraMotdProjection CurrentProjection;
 	FString ActionUrl;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UButton> Handle;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UButton> Collapse;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UBorder> Drawer;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> HandleLabel;
+
+	bool bExpanded = false;
+	bool bUnread = false;
 	bool bUsesCodeBuiltTree = false;
 };

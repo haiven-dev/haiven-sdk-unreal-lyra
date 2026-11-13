@@ -42,12 +42,18 @@ void UHaivenLyraInventoryClient::HandleItemEntitled(const FString& Code)
 
 void UHaivenLyraInventoryClient::BridgeReady(UHaivenLyraInventoryBridge* Bridge)
 {
-	// Travel gives each new controller a new bridge, so whatever waited goes through it.
-	for (const FString& Code : Pending)
+	// Travel gives each controller a new inventory instance. Replay the current
+	// account projection as well as events that arrived before this bridge.
+	TArray<FString> Codes = Pending;
+	if (const UHaivenLyraDemoSubsystem* Demo = GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UHaivenLyraDemoSubsystem>() : nullptr)
+	{
+		for (const FString& Code : Demo->GetEntitledItems()) Codes.AddUnique(Code);
+	}
+	Pending.Reset();
+	for (const FString& Code : Codes)
 	{
 		Bridge->ServerGrantEntitledItem(Code);
 	}
-	Pending.Reset();
 }
 
 void UHaivenLyraInventoryClient::ShowOutcome(const FString& Code, const FString& Outcome) const

@@ -55,8 +55,13 @@ struct HAIVEN_API FHaivenGameCredential
 	UPROPERTY(BlueprintReadOnly, Category = "Haiven|Auth")
 	FString TokenType;
 
+	/** FDateTime::MaxValue() for a durable credential, which has no fixed expiry. */
 	UPROPERTY(BlueprintReadOnly, Category = "Haiven|Auth")
 	FDateTime ExpiresAtUtc;
+
+	/** False for a durable credential, which lasts until it is revoked (ADR 0041). */
+	UPROPERTY(BlueprintReadOnly, Category = "Haiven|Auth")
+	bool bHasExpiry = true;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHaivenGameLoginCompleted, const FHaivenGameCredential&, Credential);
@@ -99,8 +104,8 @@ public:
 
 	/**
 	 * Desktop sign-in with no deep-link glue: listens on the loopback redirect in
-	 * Options.RedirectUrl (http://127.0.0.1:<port>/<path> or
-	 * http://localhost:<port>/<path>, registered exactly on the integration),
+	 * Options.RedirectUrl (`http://127.0.0.1:<port>/<path>` or
+	 * `http://localhost:<port>/<path>`, registered exactly on the integration),
 	 * opens the system browser like BeginGameLogin, and hands the browser's
 	 * redirect to the same callback validation. Only this device's own browser is
 	 * answered, and a request that does not belong to the transaction is refused
@@ -134,6 +139,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Haiven|Auth")
 	void Logout();
 
+	/**
+	 * Keeps the game-login credential in Store across restarts, so
+	 * ResumeGameLogin can reuse it. Without one the credential lasts only until
+	 * the game exits, which suits development, not a shipped game. Logout and a
+	 * refused credential clear it there too; shutting down does not.
+	 */
+	void SetCredentialStore(TSharedPtr<Haiven::IHandoffCredentialStore> Store);
+
+	/**
+	 * Signs in with the credential the store saved, without opening the browser.
+	 * Call it at start, before Begin Game Login; false means nothing valid is
+	 * saved, and an expired one is cleared. Success raises OnGameLoginCompleted
+	 * like a finished login.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Auth")
+	bool ResumeGameLogin();
+
 	UFUNCTION(BlueprintPure, Category = "Haiven|Auth")
 	bool GetAccessToken(FString& AccessToken) const;
 
@@ -161,8 +183,13 @@ public:
 	void ConnectRealtime(FHaivenConnectComplete Completion = FHaivenConnectComplete());
 	TFuture<bool> ConnectRealtimeAsync();
 
+	/** Closes realtime deliberately and cancels a scheduled reconnect. */
 	UFUNCTION(BlueprintCallable, Category = "Haiven|Realtime")
 	void DisconnectRealtime();
+
+	/** True while an unexpected close is waiting out its backoff before reconnecting. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Realtime")
+	bool IsRealtimeReconnectScheduled() const { return RealtimeReconnectTicker.IsValid(); }
 
 	FString SendRealtimeRequest(
 		const FString& Type,
@@ -219,6 +246,17 @@ public:
 	 */
 	UFUNCTION(BlueprintPure, Category = "Haiven|Rewards")
 	bool GetPendingRewardClaimId(const FString& IntegrationId, const FString& RewardRef, FString& ClaimId) const;
+
+	/**
+	 * Records a reward the player asked for before linking. Keeps the claim id
+	 * and does not post it, so nothing is granted yet.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Haiven|Rewards")
+	bool SaveRewardClaim(const FString& IntegrationId, const FString& RewardRef, FString& ClaimId, FString& Error);
+
+	/** The claim id Save Reward Claim stored for this reward, if it is still waiting to be submitted. */
+	UFUNCTION(BlueprintPure, Category = "Haiven|Rewards")
+	bool GetSavedRewardClaimId(const FString& IntegrationId, const FString& RewardRef, FString& ClaimId) const;
 
 	/** The reward claims Claim Reward drives, for game C++; null before Initialize. */
 	FHaivenRewards* GetRewards() const { return Rewards.Get(); }
@@ -284,9 +322,16 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Haiven|Chat")
 	FHaivenOutgoingChatChanged OnOutgoingChatChanged;
 
-	/** Fires whenever a Claim Reward is recorded (Claimed or AlreadyRecorded). */
+	/** Fires whenever a Claim Reward is recorded (Claimed or AlreadyRecorded). Grant loot only from this. */
 	UPROPERTY(BlueprintAssignable, Category = "Haiven|Rewards")
 	FHaivenRewardClaimed OnRewardClaimed;
+
+	/**
+	 * Fires for every saved claim submitted after linking, including a refusal.
+	 * A refusal is not loot. Claimed and AlreadyRecorded are also reported on OnRewardClaimed.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Haiven|Rewards")
+	FHaivenRewardClaimed OnRewardClaimSettled;
 
 	UPROPERTY(BlueprintAssignable, Category = "Haiven|MOTD")
 	FHaivenMotdChanged OnMotdChanged;
@@ -323,12 +368,15 @@ private:
 	friend class FHaivenCredentialBoundary;
 	friend class FHaivenIdentityBridge;
 	friend class FHaivenLoopbackLogin;
+	friend class FHaivenRealtimeReconnect;
 
 	/** Logs a failure as a Warning and keeps it as the health snapshot's last error. */
 	void RecordFailure(EHaivenHealthArea Area, const FString& Error);
 	/** Keeps bounded, content-free frame metadata for GetHealth and the editor tab. */
 	void RecordRealtimeFrame(EHaivenRealtimeFrameDirection Direction, const FString& Type);
 	void FinishExchange(bool bTransportSucceeded, int32 StatusCode, const FString& Body, const FString& TransportError);
+	/** Makes a new or resumed game-login credential the active account. */
+	void ActivateGameCredential(const Haiven::FHandoffCredential& Credential);
 	bool BeginGameLoginTransaction(const FHaivenGameLoginOptions& Options, FString& AuthorizationUrl, FString& Error);
 	/** False, broadcasting nothing, when the callback is not this transaction's and it is still pending. */
 	bool ConsumeLoopbackCallback(const FString& CallbackUrl);
@@ -356,10 +404,22 @@ private:
 	void RegisterAnalytics(const TSharedRef<FHaivenAnalytics, ESPMode::ThreadSafe>& Instance);
 	TArray<FHaivenHttpComplete> InvalidateAuthenticatedHttpRequests();
 	void InvalidateCredentialBoundary();
+	/** Clears a server-rejected bearer and every account-owned operation. */
+	void ClearRejectedCredential();
 	void CompleteHttpRequest(FGuid Handle, uint64 RequestCredentialGeneration, const FHaivenHttpResult& Result);
 	void RunDeferredRealtimeConnect();
+	/** Drops a scheduled reconnect; a connect or disconnect the game asked for also restarts the backoff. */
+	void CancelRealtimeReconnect();
+	/** After an unexpected close: reconnects later unless the game acted, the option is off, or the account cannot continue. */
+	void ScheduleRealtimeReconnect(uint64 Intent, int32 Code, const FString& Reason);
+	void RunRealtimeReconnect();
+	/** Capped exponential backoff with equal jitter: Jitter in [0, 1] picks within the upper half of the step. */
+	static float RealtimeReconnectDelaySeconds(int32 Attempt, float InitialSeconds, float MaxSeconds, float Jitter);
 	FGuid RequestInternal(bool bAuthenticated, const FString& Method, const FString& Path, const FString& BodyJson, FHaivenHttpComplete Completion);
 	void ResetChat();
+	/** Posts saved claim intents on the user claim route. No-op when none are saved. */
+	void SubmitSavedRewardClaims();
+	void FinishSavedRewardClaim(uint64 Session, const FString& IntegrationId, const FString& RewardRef, const FString& ClaimId, const FHaivenHttpResult& Result);
 	bool ValidatePayload(const FString& PayloadJson, FString& Error) const;
 	FString ResolveHttpUrl(const FString& Path) const;
 
@@ -404,6 +464,16 @@ private:
 	bool bRealtimeConnectDeferred = false;
 	bool bRealtimeConnectScheduled = false;
 	bool bRealtimeRetirementScheduled = false;
+	// Moves whenever the game connects or disconnects, so a close whose callbacks
+	// did either is not reconnected behind its back.
+	uint64 RealtimeConnectIntent = 0;
+	FTSTicker::FDelegateHandle RealtimeReconnectTicker;
+	// Consecutive reconnects since the last Ready or the game's own connect.
+	int32 RealtimeReconnectAttempt = 0;
+	float RealtimeReconnectDelay = 0.0f;
+	bool bRealtimeReconnecting = false;
+	// The server refused this session's credential, so a reconnect would be refused too.
+	bool bRealtimeAuthRefused = false;
 	// Health counters; see FHaivenHealth.
 	int32 RealtimeReadyCount = 0;
 	int32 RealtimeDropCount = 0;

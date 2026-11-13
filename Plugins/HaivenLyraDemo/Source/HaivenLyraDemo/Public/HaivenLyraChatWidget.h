@@ -12,6 +12,7 @@
 #include "HaivenLyraChatWidget.generated.h"
 
 class UButton;
+class UBorder;
 class UEditableTextBox;
 class UScrollBox;
 class UTextBlock;
@@ -34,6 +35,9 @@ public:
 
 	/** Gives the text input keyboard focus. */
 	void FocusInput();
+
+	/** Collapses both right-edge drawers while leaving their persistent handles available. */
+	void CollapseDrawers();
 
 	/** Shows the HUD status lines in the optional Status text. */
 	void SetStatus(const FText& Lines);
@@ -98,18 +102,79 @@ private:
 	void HandleTextCommitted(const FText& Text, ETextCommit::Type CommitMethod);
 
 	UFUNCTION()
+	void HandleTextChanged(const FText& Text);
+
+	UFUNCTION()
 	void HandleClaimRewardClicked();
 
 	UFUNCTION()
 	void HandleSignInClicked();
 
+	UFUNCTION()
+	void HandleChatHandleClicked();
+
+	UFUNCTION()
+	void HandleRewardsHandleClicked();
+
+	UFUNCTION()
+	void HandleChatCloseClicked();
+
+	UFUNCTION()
+	void HandleRewardsCloseClicked();
+
 	void ApplyRewardAction();
 	void ApplySignInAction();
+	void ApplyStatusChips();
+	void OpenChatDrawer();
+	void OpenRewardsDrawer();
+	void AddRewardsLine(const FText& Line);
 
 	UTextBlock* MakeLine(const FText& Line);
 
 	UPROPERTY(Transient)
 	TMap<FString, TObjectPtr<UTextBlock>> KeyedLines;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UButton> ChatHandle;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UButton> RewardsHandle;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> RewardsHandleLabel;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UButton> ChatClose;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UButton> RewardsClose;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UBorder> ChatDrawer;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UBorder> RewardsDrawer;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UScrollBox> RewardsLog;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> PlayerChip;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> ConnectionChip;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> ModerationChip;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> RewardChip;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> RewardDrawerChip;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTextBlock> InputHint;
 
 	FText DisplayedStatus;
 	FText SignInActionLabel;

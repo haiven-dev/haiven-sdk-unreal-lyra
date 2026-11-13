@@ -2,18 +2,23 @@
 
 #include "Blueprint/HaivenBlueprintRealtime.h"
 #include "Blueprint/HaivenBlueprintRestOperations.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Async/Async.h"
 #include "Blueprint/HaivenBlueprintTypes.h"
 #include "Engine/GameInstance.h"
+#include "Engine/Engine.h"
 #include "Engine/LocalPlayer.h"
 #include "Framework/Application/IInputProcessor.h"
 #include "Framework/Application/SlateApplication.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/PlatformMisc.h"
+#include "HaivenAnalytics.h"
 #include "HaivenChat.h"
 #include "HaivenClientTypes.h"
 #include "HaivenLyraChatWidget.h"
+#include "HaivenLyraDemoAnalytics.h"
 #include "HaivenLyraDemoSettings.h"
+#include "HaivenLyraHostLoss.h"
 #include "HaivenLyraEntitlements.h"
 #include "HaivenLyraMotdWidget.h"
 #include "HaivenLyraPresentation.h"
@@ -21,6 +26,8 @@
 #include "HaivenRewards.h"
 #include "HaivenSubsystem.h"
 #include "InputCoreTypes.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogHaivenLyraDemo, Log, All);
 
@@ -73,6 +80,13 @@ namespace
 void UHaivenLyraDemoSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	HostLossState = MakeShared<FHaivenLyraHostLossState>();
+	if (GEngine)
+	{
+		NetworkFailureHandle = GEngine->OnNetworkFailure().AddUObject(
+			this,
+			&UHaivenLyraDemoSubsystem::HandleNetworkFailure);
+	}
 	ModerationStatus = HaivenLyraPresentation::ModerationReady;
 	RewardStatus = GetDefault<UHaivenLyraDemoSettings>()->IsRewardConfigured()
 		? HaivenLyraPresentation::RewardReady
@@ -82,6 +96,11 @@ void UHaivenLyraDemoSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Haiven = GameInstance->GetSubsystem<UHaivenSubsystem>();
 	Events = GameInstance->GetSubsystem<UHaivenRealtimeEvents>();
 	if (!Haiven) return;
+	if (FHaivenLyraDemoAnalytics::IsEnabledValue(
+		FPlatformMisc::GetEnvironmentVariable(TEXT("HAIVEN_DEMO_ANALYTICS"))))
+	{
+		DemoAnalytics = MakeShared<FHaivenLyraDemoAnalytics>();
+	}
 
 	BindHaiven();
 
@@ -95,12 +114,20 @@ void UHaivenLyraDemoSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UHaivenLyraDemoSubsystem::Deinitialize()
 {
+	if (GEngine && NetworkFailureHandle.IsValid())
+	{
+		GEngine->OnNetworkFailure().Remove(NetworkFailureHandle);
+	}
+	NetworkFailureHandle.Reset();
+	HostLossState.Reset();
 	if (ChatInput && FSlateApplication::IsInitialized())
 	{
 		FSlateApplication::Get().UnregisterInputPreProcessor(ChatInput);
 	}
 	ChatInput.Reset();
 	ClearExpiryCheck();
+	CancelPendingRealtimeConnect();
+	DetachAnalytics();
 	UnbindHaiven();
 	Super::Deinitialize();
 }
@@ -143,6 +170,7 @@ void UHaivenLyraDemoSubsystem::UnbindHaiven()
 
 void UHaivenLyraDemoSubsystem::Connect()
 {
+	CancelPendingRealtimeConnect();
 	const UHaivenLyraDemoSettings* Settings = GetDefault<UHaivenLyraDemoSettings>();
 	ChannelId = Settings->ChannelId;
 
@@ -170,10 +198,7 @@ void UHaivenLyraDemoSubsystem::Connect()
 	}
 	else
 	{
-		MotdRequestId = FString::Printf(TEXT("lyra-motd-%llu"), ++MotdRequestSequence);
-		MotdState.LoadStarted(MotdRequestId);
-		ApplyMotdPresentation();
-		Haiven->LoadMotd(Settings->IntegrationId);
+		StartMotdRead();
 	}
 
 	if (!Settings->IsRealtimeConfigured())
@@ -200,25 +225,60 @@ void UHaivenLyraDemoSubsystem::Connect()
 		return;
 	}
 
-	// The token's own expiry, never an assumed lifetime: staging tokens last
-	// 30 minutes, and one minted earlier has less left.
-	bool bExpiryFromToken = false;
+	// Environment shortcuts must carry separate expiry metadata. The bearer is
+	// opaque: do not decode a JWT-shaped value or assume a lifetime.
 	const FDateTime Now = FDateTime::UtcNow();
-	const FDateTime ExpiresAtUtc = HaivenLyraSignIn::DemoTokenExpiry(Token, Now, bExpiryFromToken);
-	if (!bExpiryFromToken)
+	FDateTime ExpiresAtUtc;
+	const FString Expiry = FPlatformMisc::GetEnvironmentVariable(TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT"));
+	if (!HaivenLyraSignIn::DemoTokenExpiryMetadata(Expiry, ExpiresAtUtc))
 	{
-		UE_LOG(LogHaivenLyraDemo, Warning, TEXT("HAIVEN_DEMO_ACCESS_TOKEN carries no readable expiry; treating it as valid for %d minutes."),
-			static_cast<int32>(HaivenLyraSignIn::UnknownTokenLifetime.GetTotalMinutes()));
+		SetSignInState(EHaivenLyraSignInState::Failed,
+			TEXT("HAIVEN_DEMO_ACCESS_TOKEN_EXPIRES_AT must be an ISO-8601 UTC instant. The bearer remains opaque."));
+		return;
 	}
 	if (ExpiresAtUtc <= Now)
 	{
 		SetSignInState(EHaivenLyraSignInState::Expired,
-			TEXT("HAIVEN_DEMO_ACCESS_TOKEN has expired. Sign in with Haiven, or relaunch with a fresh token."));
+			TEXT("HAIVEN_DEMO_ACCESS_TOKEN has expired. Sign in with Haiven, or relaunch with fresh token metadata."));
 		return;
 	}
 	Haiven->SetAccessToken(Token, ExpiresAtUtc);
+	// SetAccessToken is an account boundary: the plugin drops every REST read
+	// started before it, the MOTD read above included, without completing it.
+	// The MOTD is public, so read it again rather than stay on "loading".
+	if (!Settings->IntegrationId.IsEmpty()) StartMotdRead();
 	EnterSignedIn(ExpiresAtUtc);
-	Haiven->ConnectRealtime();
+	// Connect on the next tick, not here: this runs while the engine starts or
+	// PIE loads its world, and that load holds the game thread for seconds. The
+	// server closes a socket whose first frame (auth, sent from the game thread)
+	// has not arrived within 5 seconds, and the plugin does not reconnect.
+	PendingRealtimeConnect = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this](float)
+	{
+		PendingRealtimeConnect.Reset();
+		// Only if nothing has replaced or cleared the token in the meantime.
+		FString Current;
+		if (Haiven && Haiven->GetRealtimeState() == EHaivenRealtimeState::Disconnected && Haiven->GetAccessToken(Current))
+		{
+			if (DemoAnalytics) DemoAnalytics->Connecting();
+			Haiven->ConnectRealtime();
+		}
+		return false;
+	}));
+}
+
+void UHaivenLyraDemoSubsystem::CancelPendingRealtimeConnect()
+{
+	if (!PendingRealtimeConnect.IsValid()) return;
+	FTSTicker::GetCoreTicker().RemoveTicker(PendingRealtimeConnect);
+	PendingRealtimeConnect.Reset();
+}
+
+void UHaivenLyraDemoSubsystem::StartMotdRead()
+{
+	MotdRequestId = FString::Printf(TEXT("lyra-motd-%llu"), ++MotdRequestSequence);
+	MotdState.LoadStarted(MotdRequestId);
+	ApplyMotdPresentation();
+	Haiven->LoadMotd(GetDefault<UHaivenLyraDemoSettings>()->IntegrationId);
 }
 
 bool UHaivenLyraDemoSubsystem::CanSignIn() const
@@ -262,8 +322,12 @@ void UHaivenLyraDemoSubsystem::CancelSignIn()
 void UHaivenLyraDemoSubsystem::SignOut()
 {
 	ClearExpiryCheck();
+	CancelPendingRealtimeConnect();
+	DetachAnalytics();
 	if (Haiven) Haiven->Logout();
 	AccountName.Reset();
+	ActiveEntitledItems.Reset();
+	AnnouncedItems.Reset();
 	SignInExpiresAtUtc = FDateTime();
 	SetSignInState(EHaivenLyraSignInState::SignedOut);
 	Note(NSLOCTEXT("HaivenLyraDemo", "SignedOut", "Signed out of Haiven on this device."));
@@ -296,6 +360,7 @@ void UHaivenLyraDemoSubsystem::HandleGameLoginCompleted(const FHaivenGameCredent
 	if (Haiven && GetDefault<UHaivenLyraDemoSettings>()->IsRealtimeConfigured()
 		&& Haiven->GetRealtimeState() == EHaivenRealtimeState::Disconnected)
 	{
+		if (DemoAnalytics) DemoAnalytics->Connecting();
 		Haiven->ConnectRealtime();
 	}
 }
@@ -324,6 +389,7 @@ void UHaivenLyraDemoSubsystem::EnterSignedIn(const FDateTime& ExpiresAtUtc)
 	SignInExpiresAtUtc = ExpiresAtUtc;
 	SetSignInState(EHaivenLyraSignInState::SignedIn);
 	ScheduleExpiryCheck();
+	AttachAnalytics();
 }
 
 void UHaivenLyraDemoSubsystem::ScheduleExpiryCheck()
@@ -357,8 +423,11 @@ void UHaivenLyraDemoSubsystem::Expire()
 {
 	// No refresh exists for a game login: clear the bearer, close chat, ask again.
 	ClearExpiryCheck();
+	DetachAnalytics();
 	if (Haiven) Haiven->Logout();
 	AccountName.Reset();
+	ActiveEntitledItems.Reset();
+	AnnouncedItems.Reset();
 	SetSignInState(EHaivenLyraSignInState::Expired, TEXT("Your Haiven session expired. Sign in again to continue."));
 	Note(FText::FromString(SignInError));
 }
@@ -375,6 +444,12 @@ void UHaivenLyraDemoSubsystem::PlayerControllerChanged(APlayerController* NewPla
 {
 	Super::PlayerControllerChanged(NewPlayerController);
 	if (!NewPlayerController || !NewPlayerController->IsLocalController()) return;
+	if (HostLossState && NewPlayerController->GetWorld()
+		&& NewPlayerController->GetWorld()->GetNetMode() == NM_Client)
+	{
+		// A new client world is a new match; a stale terminal banner must not follow it.
+		HostLossState->Reset();
+	}
 	const UHaivenLyraDemoSettings* Settings = GetDefault<UHaivenLyraDemoSettings>();
 	if (Settings->bShowChatPanel)
 	{
@@ -414,11 +489,27 @@ void UHaivenLyraDemoSubsystem::PlayerControllerChanged(APlayerController* NewPla
 			Panel->AddToPlayerScreen(100);
 			if (Panel->UsesCodeBuiltTree())
 			{
-				Panel->SetDesiredSizeInViewport(FVector2D(420.0f, 260.0f));
-				Panel->SetPositionInViewport(FVector2D(24.0f, 24.0f));
+				const float ViewportScale = FMath::Max(UWidgetLayoutLibrary::GetViewportScale(NewPlayerController), 0.01f);
+				Panel->SetAnchorsInViewport(FAnchors(0.0f, 0.0f));
+				Panel->SetPositionInViewport(FVector2D::ZeroVector, false);
+				Panel->SetAlignmentInViewport(FVector2D::ZeroVector);
+				Panel->SetDesiredSizeInViewport(UWidgetLayoutLibrary::GetViewportSize(NewPlayerController) / ViewportScale);
 			}
 			if (Haiven) HandleRealtimeState(Haiven->GetRealtimeState());
 			ApplyStatus();
+			if (HostLossState && HostLossState->IsActive())
+			{
+				const FText Status = HostLossState->StatusText();
+				Note(Status);
+				FString SmokeRole;
+				if (FParse::Value(FCommandLine::Get(), TEXT("HaivenEosSmokeRole="), SmokeRole)
+					&& SmokeRole.Equals(TEXT("guest"), ESearchCase::IgnoreCase))
+				{
+					UE_LOG(LogHaivenLyraDemo, Display,
+						TEXT("HAIVEN_EOS_SMOKE host_loss_recovered status=\"%s\""),
+						*Status.ToString());
+				}
+			}
 		}
 	}
 	bChatFocused = false;
@@ -454,15 +545,31 @@ void UHaivenLyraDemoSubsystem::PlayerControllerChanged(APlayerController* NewPla
 		}
 		if (MotdPanel)
 		{
-			MotdPanel->AddToPlayerScreen(110);
+			// Keep the MOTD surface beneath the main transparent overlay. Its root is
+			// SelfHitTestInvisible, but the lower z-order also guarantees the Chat and
+			// Rewards rail controls remain the first interactive targets.
+			MotdPanel->AddToPlayerScreen(90);
 			if (MotdPanel->UsesCodeBuiltTree())
 			{
-				MotdPanel->SetDesiredSizeInViewport(FVector2D(520.0f, 220.0f));
-				MotdPanel->SetPositionInViewport(FVector2D(468.0f, 24.0f));
+				const float ViewportScale = FMath::Max(UWidgetLayoutLibrary::GetViewportScale(NewPlayerController), 0.01f);
+				MotdPanel->SetAnchorsInViewport(FAnchors(0.0f, 0.0f));
+				MotdPanel->SetPositionInViewport(FVector2D::ZeroVector, false);
+				MotdPanel->SetAlignmentInViewport(FVector2D::ZeroVector);
+				MotdPanel->SetDesiredSizeInViewport(UWidgetLayoutLibrary::GetViewportSize(NewPlayerController) / ViewportScale);
 			}
 			ApplyMotdPresentation();
 		}
 	}
+}
+
+void UHaivenLyraDemoSubsystem::CollapseMainPanels()
+{
+	if (Panel) Panel->CollapseDrawers();
+}
+
+void UHaivenLyraDemoSubsystem::CollapseMotdPanel()
+{
+	if (MotdPanel) MotdPanel->CollapseDrawer();
 }
 
 void UHaivenLyraDemoSubsystem::Send(const FString& Content)
@@ -536,11 +643,13 @@ void UHaivenLyraDemoSubsystem::HandleRealtimeState(EHaivenRealtimeState State)
 	switch (State)
 	{
 	case EHaivenRealtimeState::Ready:
+		if (DemoAnalytics) DemoAnalytics->SessionStarted();
 		Note(NSLOCTEXT("HaivenLyraDemo", "Ready", "Haiven chat connected. Press Enter to talk."));
 		RefreshAccount();
 		RefreshEntitlements();
 		break;
 	case EHaivenRealtimeState::Disconnected:
+		if (DemoAnalytics) DemoAnalytics->Disconnected();
 		Note(NSLOCTEXT("HaivenLyraDemo", "Offline", "Haiven chat offline."));
 		break;
 	default:
@@ -619,6 +728,55 @@ void UHaivenLyraDemoSubsystem::HandleRewardOutcome(const FHaivenRewardClaimOutco
 	OnRewardClaimed.Broadcast(Outcome);
 }
 
+void UHaivenLyraDemoSubsystem::AttachAnalytics()
+{
+	if (!DemoAnalytics || !Haiven) return;
+	if (AnalyticsBridge)
+	{
+		DemoAnalytics->SessionEnded();
+		DemoAnalytics->SetEnqueue({});
+		AnalyticsBridge->Shutdown();
+		AnalyticsBridge.Reset();
+	}
+
+	const UHaivenLyraDemoSettings* Settings = GetDefault<UHaivenLyraDemoSettings>();
+	if (Settings->IntegrationId.IsEmpty()) return;
+	Haiven::RestTypes::AnalyticsContext Context;
+	Context.Environment = "development";
+	Context.IntegrationId = TCHAR_TO_UTF8(*Settings->IntegrationId);
+	Context.Platform = "unreal";
+	Haiven::RestTypes::AnalyticsSDK Sdk;
+	Sdk.Name = "haiven-unreal";
+	Sdk.Version = "0.0.0";
+	Context.Sdk = MoveTemp(Sdk);
+	AnalyticsBridge = FHaivenAnalytics::CreateForSubsystem(Haiven, MoveTemp(Context));
+	TWeakPtr<FHaivenAnalytics, ESPMode::ThreadSafe> WeakBridge = AnalyticsBridge;
+	DemoAnalytics->SetEnqueue([WeakBridge](const FString& Type, const FString& PropertiesJson)
+	{
+		const TSharedPtr<FHaivenAnalytics, ESPMode::ThreadSafe> Bridge = WeakBridge.Pin();
+		return Bridge && Bridge->TryEnqueue(Type, PropertiesJson);
+	});
+	DemoAnalytics->GameLaunched();
+	const EHaivenRealtimeState State = Haiven->GetRealtimeState();
+	if (State == EHaivenRealtimeState::Ready) DemoAnalytics->SessionStarted();
+	else if (State == EHaivenRealtimeState::Connecting || State == EHaivenRealtimeState::Authenticating)
+		DemoAnalytics->Connecting();
+}
+
+void UHaivenLyraDemoSubsystem::DetachAnalytics()
+{
+	if (DemoAnalytics) DemoAnalytics->SessionEnded();
+	if (DemoAnalytics) DemoAnalytics->SetEnqueue({});
+	if (AnalyticsBridge)
+	{
+		TSharedPtr<FHaivenAnalytics, ESPMode::ThreadSafe> Bridge = MoveTemp(AnalyticsBridge);
+		// Keep the bridge alive through its asynchronous best-effort flush. Logout
+		// may still shut it down at the credential boundary, which is intentionally
+		// allowed to win over telemetry during account changes.
+		Bridge->Flush([Bridge] { Bridge->Shutdown(); });
+	}
+}
+
 FString UHaivenLyraDemoSubsystem::GetConnectionStatus() const
 {
 	return HaivenLyraPresentation::ConnectionStatus(Haiven ? Haiven->GetRealtimeState() : EHaivenRealtimeState::Disconnected);
@@ -631,11 +789,48 @@ bool UHaivenLyraDemoSubsystem::CanClaimReward() const
 
 FText UHaivenLyraDemoSubsystem::GetStatusText() const
 {
-	return HaivenLyraPresentation::StatusLines(AccountName, GetSignInStatus(), GetConnectionStatus(), ModerationStatus, RewardStatus);
+	const FText Base = HaivenLyraPresentation::StatusLines(
+		AccountName,
+		GetSignInStatus(),
+		GetConnectionStatus(),
+		ModerationStatus,
+		RewardStatus);
+	const FText HostLoss = GetHostLossStatus();
+	return HostLoss.IsEmpty()
+		? Base
+		: FText::Format(NSLOCTEXT("HaivenLyraDemo", "StatusWithHostLoss", "{0}\n{1}"), Base, HostLoss);
+}
+
+FText UHaivenLyraDemoSubsystem::GetHostLossStatus() const
+{
+	return HostLossState ? HostLossState->StatusText() : FText::GetEmpty();
+}
+
+void UHaivenLyraDemoSubsystem::HandleNetworkFailure(
+	UWorld* World,
+	UNetDriver* NetDriver,
+	ENetworkFailure::Type FailureType,
+	const FString& ErrorString)
+{
+	(void)NetDriver;
+	(void)ErrorString;
+	const bool bWasClient = World && World->GetNetMode() == NM_Client;
+	if (!HostLossState || !HostLossState->Record(bWasClient, FailureType)) return;
+
+	// Do not log ErrorString: an online provider may include connection metadata.
+	UE_LOG(LogHaivenLyraDemo, Warning, TEXT("listen host disconnected; match ended (network failure %d)"),
+		static_cast<int32>(FailureType));
+	ApplyStatus();
+	Note(HostLossState->StatusText());
 }
 
 void UHaivenLyraDemoSubsystem::ApplyStatus()
 {
+	// Verbose, so off by default: keep headless diagnostics state-only and never
+	// serialize the player-facing header, which includes the signed-in account name.
+	UE_LOG(LogHaivenLyraDemo, Verbose,
+		TEXT("status: sign-in=%s | realtime=%s | moderation=%s | reward=%s"),
+		*GetSignInStatus(), *GetConnectionStatus(), *ModerationStatus, *RewardStatus);
 	if (Panel)
 	{
 		Panel->SetStatus(GetStatusText());
@@ -667,6 +862,9 @@ void UHaivenLyraDemoSubsystem::HandleMotdLoadFailed()
 
 void UHaivenLyraDemoSubsystem::ApplyMotdPresentation() const
 {
+	const FHaivenLyraMotdProjection& Projection = MotdState.GetProjection();
+	UE_LOG(LogHaivenLyraDemo, Verbose, TEXT("motd: %s%s"), *HaivenLyraMotdStatusName(Projection.Status),
+		Projection.Message.IsSet() ? *(TEXT(" ") + Projection.Message->Title) : TEXT(""));
 	if (!MotdPanel) return;
 	MotdPanel->PresentProjection(MotdState.GetProjection());
 }
@@ -701,9 +899,14 @@ void UHaivenLyraDemoSubsystem::HandleEntitlementsUpdated(const FHaivenEntitlemen
 
 void UHaivenLyraDemoSubsystem::HandleEntitlements(const FHaivenHttpResult& Result, const FHaivenRestAccountEntitlementsResponse& Response)
 {
-	for (const FString& Code : HaivenLyraEntitlements::NewlyActiveItems(Response, GrantedItems))
+	ActiveEntitledItems.Reset();
+	for (const FString& Code : HaivenLyraEntitlements::ActiveItems(Response))
 	{
-		GrantedItems.Add(Code);
+		ActiveEntitledItems.Add(Code);
+	}
+	for (const FString& Code : HaivenLyraEntitlements::NewlyActiveItems(Response, AnnouncedItems))
+	{
+		AnnouncedItems.Add(Code);
 		Note(FText::Format(NSLOCTEXT("HaivenLyraDemo", "Entitled", "unlocked: {0}"), FText::FromString(Code)));
 		OnItemEntitled.Broadcast(Code);
 	}

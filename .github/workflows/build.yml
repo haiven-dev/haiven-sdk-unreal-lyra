@@ -1,0 +1,24 @@
+name: Build
+
+# Descriptor check for the Haiven plugins. Cooking Lyra needs Marketplace
+# content and an Unreal install, which this job does not have. A v* tag runs
+# the same check and does not publish a release.
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  plugins:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Haiven plugin descriptors
+        run: python3 -m unittest ci.check_plugins -v

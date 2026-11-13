@@ -4,9 +4,9 @@
 // This component is that channel: the server adds it to every player
 // controller at login, and it replicates to the owning client.
 //
-// DEMO ONLY: the server trusts the client's claim that the account holds the
-// entitlement. A shipped game must verify entitlements server-side, from its
-// own backend session, before granting anything.
+// Remote clients are rejected because the current Haiven API response carries
+// no server-verifiable grant proof. A shipped multiplayer game must verify a
+// player-bound grant through its trusted backend before granting anything.
 
 #pragma once
 
@@ -22,7 +22,7 @@ class HAIVENLYRAINVENTORY_API UHaivenLyraInventoryBridge : public UActorComponen
 public:
 	UHaivenLyraInventoryBridge();
 
-	/** Asks the server to grant the item mapped to Code. */
+	/** Grants a locally owned listen-host item; remote requests fail closed. */
 	UFUNCTION(Server, Reliable)
 	void ServerGrantEntitledItem(const FString& Code);
 
@@ -30,6 +30,10 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	/** Adds the mapped item now; the inventory component must already exist. */
+	void Grant(const FString& Code);
+	void GrantAfterExperienceLoaded(const class ULyraExperienceDefinition* Experience, FString Code);
+
 	/** Tells the owning client how the grant went, for its chat panel. */
 	UFUNCTION(Client, Reliable)
 	void ClientGrantResult(const FString& Code, const FString& Outcome);

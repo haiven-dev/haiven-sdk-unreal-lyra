@@ -63,7 +63,34 @@ namespace Haiven
 		{
 			std::string AccessToken;
 			std::string TokenType;
+			/// Meaningful only when `bHasExpiry`.
 			FTicks ExpiresAt{};
+			/// False for a durable credential, which lasts until it is revoked
+			/// (ADR 0041): the exchange returned a null `expires_in`.
+			bool bHasExpiry = true;
+		};
+
+		/**
+		 * Where a host keeps the credential across restarts, so `FCore::Resume`
+		 * can reuse it instead of opening the browser. A shipped game supplies one
+		 * backed by persistent storage; without one the credential is memory-only,
+		 * which suits development and tests.
+		 */
+		class ICredentialStore
+		{
+		public:
+			virtual ~ICredentialStore() = default;
+			/// Writes the saved credential and returns true, or returns false when none is saved.
+			virtual bool Load(FCredential& OutCredential) = 0;
+			virtual void Store(const FCredential& Credential) = 0;
+			virtual void Clear() = 0;
+		};
+
+		enum class ECredentialEndReason
+		{
+			Expired,
+			RestUnauthorized,
+			WebSocketExpired,
 		};
 
 		/// SHA-256 of `Bytes` (FIPS 180-4).
@@ -91,8 +118,21 @@ namespace Haiven
 			~FCore()
 			{
 				Cancel();
-				ClearCredential();
+				// Memory only: shutting down is not signing out, so a saved
+				// credential stays saved for the next launch.
+				ResetCredential();
 			}
+
+			/// Keeps every stored credential in `Store` as well, and clears it there.
+			/// Not owned; it must outlive this core or be replaced first. Null
+			/// returns to memory-only.
+			void SetCredentialStore(ICredentialStore* InStore) { Store = InStore; }
+
+			/// Reuses the credential the store saved, so a restart does not send the
+			/// player back to the browser. Call it before `Begin`: false means
+			/// nothing valid is saved, and the host then begins a handoff. A saved
+			/// credential past its expiry is cleared.
+			bool Resume(FTicks Now, FCredential& OutCredential);
 
 			/// Starts a transaction: validates the configuration, derives the state
 			/// and verifier from 32 bytes of entropy each, and writes the URL to open.
@@ -117,9 +157,9 @@ namespace Haiven
 			void Cancel();
 			bool HasPendingTransaction() const { return !ActiveState.empty(); }
 
-			/// Keeps the bearer from the exchange response. A refresh credential is
-			/// refused: the handoff grants a short-lived bearer and nothing that
-			/// outlives it.
+			/// Keeps the bearer from the exchange response, and saves it in the
+			/// credential store when one is set. A refresh credential is refused: the
+			/// handoff grants a bearer and nothing that renews it.
 			bool StoreExchangeResponse(
 				const std::string& Json,
 				FTicks Now,
@@ -127,7 +167,20 @@ namespace Haiven
 				std::string& OutError);
 
 			bool GetAccessToken(FTicks Now, std::string& OutAccessToken) const;
+			/// Erases the credential in memory and in the credential store.
 			void ClearCredential();
+
+			/// Clears a bearer ended by metadata expiry, REST 401, or auth.expired,
+			/// then starts a new handoff. No web refresh route is involved.
+			bool Restart(
+				ECredentialEndReason Reason,
+				const FConfig& Config,
+				const std::vector<std::uint8_t>& StateEntropy,
+				const std::vector<std::uint8_t>& VerifierEntropy,
+				FTicks Now,
+				std::string& OutAuthorizationUrl,
+				std::string& OutState,
+				std::string& OutError);
 
 		private:
 			FConfig ActiveConfig;
@@ -139,6 +192,9 @@ namespace Haiven
 			/// a game building at `-O2 -Werror` would inherit.
 			FCredential Credential;
 			bool bHasCredential = false;
+			ICredentialStore* Store = nullptr;
+
+			void ResetCredential();
 		};
 
 		namespace HandoffDetail
@@ -611,38 +667,98 @@ namespace Haiven
 			const FJson* AccessToken = Object.Find("access_token");
 			const FJson* TokenType = Object.Find("token_type");
 			const FJson* ExpiresIn = Object.Find("expires_in");
-			// A lifetime past a century is not a credential policy, and its ticks
-			// would overflow; refuse it with the other malformed responses.
+			// Present but null for a durable credential (ADR 0041).
+			const bool bDurable = ExpiresIn != nullptr && ExpiresIn->Kind == FJson::EKind::Null;
+			// A finite lifetime is a whole number of seconds (SDK-HANDOFF-11). A
+			// lifetime past a century is not a credential policy, and its ticks
+			// would overflow; refuse both with the other malformed responses.
 			if (AccessToken == nullptr || !AccessToken->IsString() || AccessToken->String.empty()
 				|| TokenType == nullptr || !TokenType->IsString() || TokenType->String.empty()
-				|| ExpiresIn == nullptr || ExpiresIn->Kind != FJson::EKind::Number
-				|| !(ExpiresIn->Number >= 0.0) || ExpiresIn->Number > 3.2e9)
+				|| ExpiresIn == nullptr
+				|| (!bDurable
+					&& (ExpiresIn->Kind != FJson::EKind::Number
+						|| !(ExpiresIn->Number >= 0.0) || ExpiresIn->Number > 3.2e9
+						|| ExpiresIn->Number != std::floor(ExpiresIn->Number))))
 			{
 				OutError = "The handoff exchange returned an invalid credential.";
 				return false;
 			}
 
-			ClearCredential();
-			const FTicks Lifetime(static_cast<std::int64_t>(std::llround(ExpiresIn->Number * 1.0e7)));
-			OutCredential = FCredential{AccessToken->String, TokenType->String, Now + Lifetime};
+			ResetCredential();
+			OutCredential = FCredential{AccessToken->String, TokenType->String, FTicks::zero(), !bDurable};
+			if (!bDurable)
+				OutCredential.ExpiresAt = Now + FTicks(static_cast<std::int64_t>(std::llround(ExpiresIn->Number * 1.0e7)));
 			Credential = OutCredential;
 			bHasCredential = true;
+			if (Store != nullptr) Store->Store(Credential);
+			return true;
+		}
+
+		inline bool FCore::Resume(FTicks Now, FCredential& OutCredential)
+		{
+			if (Store == nullptr) return false;
+			FCredential Saved;
+			if (!Store->Load(Saved)) return false;
+			if (Saved.AccessToken.empty() || (Saved.bHasExpiry && Now >= Saved.ExpiresAt))
+			{
+				HandoffDetail::SecureReset(Saved.AccessToken);
+				HandoffDetail::SecureReset(Saved.TokenType);
+				ClearCredential();
+				return false;
+			}
+			if (Saved.TokenType.empty()) Saved.TokenType = "Bearer";
+			ResetCredential();
+			Credential = Saved;
+			bHasCredential = true;
+			OutCredential = std::move(Saved);
 			return true;
 		}
 
 		inline bool FCore::GetAccessToken(FTicks Now, std::string& OutAccessToken) const
 		{
-			if (!bHasCredential || Credential.AccessToken.empty() || Now >= Credential.ExpiresAt) return false;
+			if (!bHasCredential || Credential.AccessToken.empty()) return false;
+			if (Credential.bHasExpiry && Now >= Credential.ExpiresAt) return false;
 			OutAccessToken = Credential.AccessToken;
 			return true;
 		}
 
-		inline void FCore::ClearCredential()
+		inline void FCore::ResetCredential()
 		{
 			HandoffDetail::SecureReset(Credential.AccessToken);
 			HandoffDetail::SecureReset(Credential.TokenType);
 			Credential.ExpiresAt = FTicks::zero();
+			Credential.bHasExpiry = true;
 			bHasCredential = false;
+		}
+
+		inline void FCore::ClearCredential()
+		{
+			ResetCredential();
+			if (Store != nullptr) Store->Clear();
+		}
+
+		inline bool FCore::Restart(
+			ECredentialEndReason Reason,
+			const FConfig& Config,
+			const std::vector<std::uint8_t>& StateEntropy,
+			const std::vector<std::uint8_t>& VerifierEntropy,
+			FTicks Now,
+			std::string& OutAuthorizationUrl,
+			std::string& OutState,
+			std::string& OutError)
+		{
+			switch (Reason)
+			{
+			case ECredentialEndReason::Expired:
+			case ECredentialEndReason::RestUnauthorized:
+			case ECredentialEndReason::WebSocketExpired:
+				break;
+			default:
+				OutError = "The handoff credential end reason is invalid.";
+				return false;
+			}
+			ClearCredential();
+			return Begin(Config, StateEntropy, VerifierEntropy, Now, OutAuthorizationUrl, OutState, OutError);
 		}
 	}
 }

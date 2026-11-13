@@ -4,10 +4,11 @@ name: release-please
 # keeps the sdk-dev -> main pull request open. Once that pull request merges
 # with a merge commit, this opens the release pull request that bumps
 # CHANGELOG.md, .release-please-manifest.json, and VersionName in
-# Plugins/Haiven/Haiven.uplugin, Plugins/HaivenLyraDemo/HaivenLyraDemo.uplugin,
-# and Plugins/HaivenLyraInventory/HaivenLyraInventory.uplugin. It does not change
-# the integer Version field or Epic's Lyra plugins. Merging that pull request
-# tags v<version> and publishes the GitHub release.
+# Plugins/HaivenLyraDemo/HaivenLyraDemo.uplugin and
+# Plugins/HaivenLyraInventory/HaivenLyraInventory.uplugin. It does not change
+# the integer Version field, Epic's Lyra plugins, or Plugins/Haiven/Haiven.uplugin,
+# whose VersionName is the haiven-sdk-unreal version from the last plugin sync.
+# Merging that pull request tags v<version> and publishes the GitHub release.
 on:
   push:
     branches: [main]
