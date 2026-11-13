@@ -1,0 +1,70 @@
+name: Promotion PR
+
+# Keeps one open pull request from sdk-dev into main. Its description lists
+# the sdk-dev commits that main lacks, grouped by conventional-commit type,
+# and is refreshed whenever either branch moves. Text a reviewer adds outside
+# the generated block is kept.
+#
+# This workflow never merges, pushes, tags, or releases. Merge the promotion
+# pull request with a merge commit, not squash or rebase: release-please runs
+# on main and reads each promoted commit to choose the next version and write
+# the changelog. A squash leaves only the promotion subject, which releases
+# nothing.
+#
+# A push runs the copy of this file on the branch it lands on, so sdk-dev
+# pushes trigger it only after sdk-dev also carries this file. A manual
+# dispatch from main refreshes the pull request at any time.
+on:
+  push:
+    branches: [sdk-dev, main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: promote-sdk-dev
+  cancel-in-progress: false
+
+jobs:
+  promotion-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      # A pull request opened by the app token starts pull_request workflows,
+      # so the checks run on the promotion. GITHUB_TOKEN would not start them.
+      # The token is limited to pull requests: the action opens or edits the
+      # promotion pull request and pushes nothing.
+      - name: Mint promotion token
+        id: promotion-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        with:
+          app-id: ${{ vars.HAIVEN_RELEASE_APP_ID }}
+          private-key: ${{ secrets.HAIVEN_RELEASE_APP_PRIVATE_KEY }}
+          owner: haiven-dev
+          repositories: haiven-sdk-unreal-lyra
+          permission-pull-requests: write
+
+      # The action fetches both branches itself. This repository is public,
+      # so that fetch needs no stored credential.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+
+      - uses: haiven-dev/haiven-actions/actions/promotion-pr@407d8e232ebd2b733db9f9ac2c88ae382fdce149 # main
+        with:
+          token: ${{ steps.promotion-token.outputs.token }}
+          source-branch: sdk-dev
+          target-branch: main
+          title: "chore: promote sdk-dev into main"
+          note: >-
+            Merge with a **merge commit**, not squash or rebase. release-please
+            reads each promoted commit on main to choose the next version and
+            write the changelog, and a merge commit keeps the next list starting
+            where this one ends.
