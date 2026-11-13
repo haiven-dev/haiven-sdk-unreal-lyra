@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to archive (for example v0.0.0). Empty uses the Haiven VersionName and does not publish."
+        description: "Existing tag to archive (for example v0.0.0). Empty uses the Lyra demo plugin VersionName and does not publish."
         required: false
         default: ""
       publish:
@@ -51,7 +51,7 @@ jobs:
         with:
           ref: ${{ env.RELEASE_REF }}
           persist-credentials: false
-      - name: Check the tag against the Haiven plugin VersionName
+      - name: Check the tag against the Lyra demo plugin VersionName
         id: version
         env:
           PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}

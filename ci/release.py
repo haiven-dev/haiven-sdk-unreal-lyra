@@ -9,9 +9,12 @@ files. This script does not fetch or copy that content.
 Usage:
 
     python3 ci/release.py version [--tag v1.2.3]
-        Print the release version. The three Haiven plugin descriptors must
-        share one VersionName. With --tag, the tag must be `v` plus that
-        VersionName.
+        Print the release version. The two Lyra demo plugin descriptors
+        (HaivenLyraDemo and HaivenLyraInventory) must share one VersionName,
+        which release-please owns. With --tag, the tag must be `v` plus that
+        VersionName. Plugins/Haiven/Haiven.uplugin is not read: it is the
+        upstream haiven-sdk-unreal copy, and its VersionName names the SDK
+        version that the last plugin sync brought in.
 
     python3 ci/release.py source --version 1.2.3 --out dist/
         Write `haiven-unreal-lyra-source-<version>.zip`. The zip is the git
@@ -35,11 +38,15 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 PROJECT = "Lyra"
 ARCHIVE_PREFIX = PROJECT + "/"
+# The demo plugins carry this repository's release version. release-please
+# bumps their VersionName (release-please-config.json extra-files).
 PLUGIN_DESCRIPTORS = (
-    "Plugins/Haiven/Haiven.uplugin",
     "Plugins/HaivenLyraDemo/HaivenLyraDemo.uplugin",
     "Plugins/HaivenLyraInventory/HaivenLyraInventory.uplugin",
 )
+# The vendored SDK plugin keeps the haiven-sdk-unreal version. A plugin sync
+# overwrites it, so it is not compared with the demo version.
+SDK_DESCRIPTOR = "Plugins/Haiven/Haiven.uplugin"
 # Epic's platform folders. The source zip is the cross-platform artifact.
 PLATFORMS = ("Windows", "Mac", "Linux", "Android", "IOS")
 # Editor and UBT output. Never ship these, at any depth.
@@ -67,7 +74,7 @@ def descriptor_version(root=None):
     versions = set(found.values())
     if len(versions) != 1:
         detail = ", ".join(f"{name}={value}" for name, value in sorted(found.items()))
-        raise RuntimeError(f"Haiven plugin VersionName values differ: {detail}")
+        raise RuntimeError(f"Lyra demo plugin VersionName values differ: {detail}")
     return versions.pop()
 
 
@@ -93,7 +100,7 @@ def release_version(tag=None, root=None):
         raise RuntimeError(f"tag {tag!r} is not v<major>.<minor>.<patch>[-prerelease]")
     if tag[1:] != declared:
         raise RuntimeError(
-            f"tag {tag} does not match Haiven plugin VersionName {declared!r}; "
+            f"tag {tag} does not match the Lyra demo plugin VersionName {declared!r}; "
             f"bump those descriptors to {tag[1:]!r} before tagging")
     return declared
 
@@ -225,7 +232,7 @@ def source(version, out, root=None):
     declared = descriptor_version(root)
     if version != declared:
         raise RuntimeError(
-            f"version {version!r} does not match Haiven plugin VersionName {declared!r}")
+            f"version {version!r} does not match the Lyra demo plugin VersionName {declared!r}")
     out = Path(out).resolve()
     skip = [out] if out == root or root in out.parents else []
     archive = out / f"haiven-unreal-lyra-source-{version}.zip"

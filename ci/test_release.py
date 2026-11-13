@@ -18,6 +18,9 @@ def fixture(root):
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"VersionName": "1.2.3"}))
+    sdk = root / release.SDK_DESCRIPTOR
+    sdk.parent.mkdir(parents=True, exist_ok=True)
+    sdk.write_text(json.dumps({"VersionName": "0.1.0-preview.1"}))
     for name in release.PLATFORMS:
         readme = root / "Platforms" / name / "readme.txt"
         readme.parent.mkdir(parents=True, exist_ok=True)
@@ -58,6 +61,21 @@ class VersionTests(unittest.TestCase):
             path.write_text(json.dumps({"VersionName": "9.9.9"}))
             with self.assertRaises(RuntimeError):
                 release.descriptor_version(root)
+
+    def test_sdk_plugin_version_is_not_the_release_version(self):
+        # A plugin sync rewrites Haiven.uplugin to the upstream SDK version.
+        # That must not change or block the demo release version.
+        self.assertNotIn(release.SDK_DESCRIPTOR, release.PLUGIN_DESCRIPTORS)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture(root)
+            for synced in ("0.1.0-preview.2", "2.0.0", "not-a-version"):
+                with self.subTest(synced=synced):
+                    (root / release.SDK_DESCRIPTOR).write_text(json.dumps({"VersionName": synced}))
+                    self.assertEqual(release.descriptor_version(root), "1.2.3")
+                    self.assertEqual(release.release_version("v1.2.3", root), "1.2.3")
+            with self.assertRaises(RuntimeError):
+                release.release_version("v2.0.0", root)
 
 
 class SourceZipTests(unittest.TestCase):

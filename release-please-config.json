@@ -16,11 +16,6 @@
       "extra-files": [
         {
           "type": "json",
-          "path": "Plugins/Haiven/Haiven.uplugin",
-          "jsonpath": "$.VersionName"
-        },
-        {
-          "type": "json",
           "path": "Plugins/HaivenLyraDemo/HaivenLyraDemo.uplugin",
           "jsonpath": "$.VersionName"
         },

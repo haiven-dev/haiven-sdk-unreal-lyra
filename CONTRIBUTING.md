@@ -20,7 +20,7 @@ Do not paste access tokens, passwords, or private endpoints.
 
 ## Pull requests
 
-1. Fork the repository and branch from `main`.
+1. Fork the repository and branch from `sdk-dev`.
 2. Keep the change focused on the Haiven integration unless you are fixing
    a sample file that blocks it.
 3. Use a [Conventional Commits](https://www.conventionalcommits.org/)
@@ -31,15 +31,23 @@ Do not paste access tokens, passwords, or private endpoints.
    `type` is one of `feat`, `fix`, `docs`, `deps`, `style`, `refactor`,
    `perf`, `test`, `build`, `ci`, `chore`, or `revert`. `scope` is
    optional.
-4. Open the pull request against `main`. Say what changed and how you
-   checked it.
+4. Open the pull request against `sdk-dev`. Say what changed and how you
+   checked it. Maintainers promote `sdk-dev` into `main`, and release-please
+   releases from `main`.
 
 Do not commit access tokens, passwords, private endpoints, or local
 credentials.
 
 ## Checks
 
-`Lyra.uproject` targets Unreal Engine 5.8. This repository has no
-engine-free test script. Describe which editor you opened and what you
-played. Do not treat a missing Marketplace content folder as a failure of
-the Haiven plugins.
+`Lyra.uproject` targets Unreal Engine 5.8. The engine-free checks that
+CI runs are:
+
+```sh
+python3 -m unittest ci.check_plugins -v
+python3 -m unittest ci.test_release -v
+```
+
+They do not build or play Lyra. For a change to plugin code, also describe
+which editor you opened and what you played. Do not treat a missing
+Marketplace content folder as a failure of the Haiven plugins.
