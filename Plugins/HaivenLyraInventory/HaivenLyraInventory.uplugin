@@ -20,6 +20,14 @@
 		{
 			"Name": "HaivenLyraDemo",
 			"Enabled": true
+		},
+		{
+			"Name": "CommonUser",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayMessageRouter",
+			"Enabled": true
 		}
 	]
 }

@@ -6,7 +6,11 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "GameModes/LyraUserFacingExperienceDefinition.h"
+#include "GameFramework/PlayerState.h"
+#include "HaivenLyraDemoSettings.h"
 #include "HaivenLyraDemoSubsystem.h"
+#include "Messages/LyraVerbMessage.h"
+#include "Messages/LyraVerbMessageHelpers.h"
 #include "HaivenLyraGameplay.h"
 #include "HaivenLyraInventoryBridge.h"
 #include "Engine/StreamableManager.h"
@@ -29,6 +33,14 @@ void UHaivenLyraInventoryClient::Initialize(FSubsystemCollectionBase& Collection
 	{
 		Demo->OnItemEntitled.AddDynamic(this, &UHaivenLyraInventoryClient::HandleItemEntitled);
 		Demo->OnPlayGameplayRequested.AddDynamic(this, &UHaivenLyraInventoryClient::PlayGameplay);
+		Demo->OnSignInStateChanged.AddDynamic(this, &UHaivenLyraInventoryClient::HandleSignInChanged);
+	}
+	UGameInstance* GameInstance = GetLocalPlayer() ? GetLocalPlayer()->GetGameInstance() : nullptr;
+	UGameplayMessageSubsystem* Messages = GameInstance ? GameInstance->GetSubsystem<UGameplayMessageSubsystem>() : nullptr;
+	const FGameplayTag Elimination = FGameplayTag::RequestGameplayTag(TEXT("Lyra.Elimination.Message"), false);
+	if (Messages && Elimination.IsValid())
+	{
+		EliminationListener = Messages->RegisterListener(Elimination, this, &UHaivenLyraInventoryClient::HandleElimination);
 	}
 }
 
@@ -38,7 +50,9 @@ void UHaivenLyraInventoryClient::Deinitialize()
 	{
 		Demo->OnItemEntitled.RemoveAll(this);
 		Demo->OnPlayGameplayRequested.RemoveAll(this);
+		Demo->OnSignInStateChanged.RemoveAll(this);
 	}
+	if (EliminationListener.IsValid()) EliminationListener.Unregister();
 	Pending.Reset();
 	Super::Deinitialize();
 }
@@ -107,6 +121,51 @@ void UHaivenLyraInventoryClient::PlayGameplay()
 	UE_LOG(LogHaivenLyraGameplay, Display, TEXT("PLAY hosting offline experience %s map %s"),
 		*Experience->GetPrimaryAssetId().ToString(), *Request->MapID.ToString());
 	Sessions->HostSession(Controller, Request);
+}
+
+void UHaivenLyraInventoryClient::HandleElimination(FGameplayTag Channel, const FLyraVerbMessage& Message)
+{
+	if (bMatchRewardEarned) return;
+	ULocalPlayer* Player = GetLocalPlayer();
+	const APlayerController* Controller = Player ? Player->GetPlayerController(nullptr) : nullptr;
+	const APlayerState* Local = Controller ? Controller->PlayerState.Get() : nullptr;
+	const APlayerState* Killer = ULyraVerbMessageHelpers::GetPlayerStateFromObject(Message.Instigator);
+	if (!HaivenLyraGameplay::IsRewardingElimination(Local, Killer, Message.Target)) return;
+
+	bMatchRewardEarned = true;
+	UHaivenLyraDemoSubsystem* Demo = Player->GetSubsystem<UHaivenLyraDemoSubsystem>();
+	if (!Demo) return;
+	if (Demo->GetSignInState() != EHaivenLyraSignInState::SignedIn)
+	{
+		bMatchRewardWaitingForSignIn = true;
+		Tell(Demo, NSLOCTEXT("HaivenLyraInventory", "MatchRewardWaits",
+			"First elimination! Sign in with Haiven to claim your match reward."));
+		return;
+	}
+	ClaimMatchReward();
+}
+
+void UHaivenLyraInventoryClient::HandleSignInChanged(EHaivenLyraSignInState State)
+{
+	if (!bMatchRewardWaitingForSignIn || State != EHaivenLyraSignInState::SignedIn) return;
+	bMatchRewardWaitingForSignIn = false;
+	ClaimMatchReward();
+}
+
+void UHaivenLyraInventoryClient::ClaimMatchReward()
+{
+	UHaivenLyraDemoSubsystem* Demo = GetLocalPlayer() ? GetLocalPlayer()->GetSubsystem<UHaivenLyraDemoSubsystem>() : nullptr;
+	if (!Demo) return;
+	if (!GetDefault<UHaivenLyraDemoSettings>()->IsRewardConfigured())
+	{
+		Tell(Demo, NSLOCTEXT("HaivenLyraInventory", "MatchRewardNone",
+			"First elimination! No Haiven reward is configured (set RewardRef)."));
+		return;
+	}
+	Tell(Demo, NSLOCTEXT("HaivenLyraInventory", "MatchRewardClaim",
+		"First elimination! Claiming your Haiven match reward."));
+	UE_LOG(LogHaivenLyraGameplay, Display, TEXT("match reward: first elimination, claiming the configured reward"));
+	Demo->ClaimReward();
 }
 
 UHaivenLyraInventoryBridge* UHaivenLyraInventoryClient::FindBridge() const

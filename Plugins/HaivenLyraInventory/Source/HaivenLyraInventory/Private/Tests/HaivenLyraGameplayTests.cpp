@@ -3,6 +3,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "CommonSessionSubsystem.h"
+#include "GameFramework/PlayerState.h"
 #include "GameModes/LyraUserFacingExperienceDefinition.h"
 #include "HaivenLyraGameplay.h"
 #include "UObject/Package.h"
@@ -64,6 +65,26 @@ bool FHaivenLyraGameplaySelectionTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("the URL carries the gameplay experience"),
 		Request->ExtraArgs.FindRef(TEXT("Experience")), ExperienceId.PrimaryAssetName.ToString());
 	TestEqual(TEXT("experience extra arguments are kept"), Request->ExtraArgs.FindRef(TEXT("Keep")), FString(TEXT("1")));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FHaivenLyraMatchRewardTest,
+	"Haiven.LyraDemo.MatchReward",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FHaivenLyraMatchRewardTest::RunTest(const FString& Parameters)
+{
+	APlayerState* Local = NewObject<APlayerState>(GetTransientPackage(), TEXT("HaivenLocalPlayerState"));
+	APlayerState* Bot = NewObject<APlayerState>(GetTransientPackage(), TEXT("HaivenBotPlayerState"));
+	TestTrue(TEXT("eliminating a bot earns the match reward"),
+		HaivenLyraGameplay::IsRewardingElimination(Local, Local, Bot));
+	TestFalse(TEXT("being eliminated earns nothing"), HaivenLyraGameplay::IsRewardingElimination(Local, Bot, Local));
+	TestFalse(TEXT("another player's elimination earns nothing"),
+		HaivenLyraGameplay::IsRewardingElimination(Local, Bot, Bot));
+	TestFalse(TEXT("eliminating yourself earns nothing"), HaivenLyraGameplay::IsRewardingElimination(Local, Local, Local));
+	TestFalse(TEXT("an unknown instigator earns nothing"), HaivenLyraGameplay::IsRewardingElimination(Local, nullptr, Bot));
+	TestFalse(TEXT("no local player state earns nothing"), HaivenLyraGameplay::IsRewardingElimination(nullptr, nullptr, Bot));
 	return true;
 }
 

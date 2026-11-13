@@ -6,11 +6,15 @@
 
 #pragma once
 
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 
 #include "HaivenLyraInventoryClient.generated.h"
 
 class UHaivenLyraInventoryBridge;
+struct FGameplayTag;
+struct FLyraVerbMessage;
+enum class EHaivenLyraSignInState : uint8;
 
 UCLASS()
 class HAIVENLYRAINVENTORY_API UHaivenLyraInventoryClient : public ULocalPlayerSubsystem
@@ -35,7 +39,23 @@ private:
 	UFUNCTION()
 	void PlayGameplay();
 
+	/**
+	 * The match reward, Lyra's counterpart of Boss Room's victory reward: this
+	 * player's first elimination in a session claims the configured RewardRef
+	 * once. Signed out, the claim waits for sign-in. Lyra broadcasts
+	 * eliminations on the server, so this runs for the host and offline play.
+	 */
+	void HandleElimination(FGameplayTag Channel, const FLyraVerbMessage& Message);
+
+	UFUNCTION()
+	void HandleSignInChanged(EHaivenLyraSignInState State);
+
+	void ClaimMatchReward();
+
 	UHaivenLyraInventoryBridge* FindBridge() const;
 
 	TArray<FString> Pending;
+	FGameplayMessageListenerHandle EliminationListener;
+	bool bMatchRewardEarned = false;
+	bool bMatchRewardWaitingForSignIn = false;
 };

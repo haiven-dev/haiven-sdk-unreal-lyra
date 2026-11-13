@@ -1,6 +1,7 @@
 #include "HaivenLyraGameplay.h"
 
 #include "CommonSessionSubsystem.h"
+#include "GameFramework/PlayerState.h"
 #include "GameModes/LyraUserFacingExperienceDefinition.h"
 
 namespace
@@ -18,6 +19,14 @@ namespace
 bool HaivenLyraGameplay::IsFrontEndMap(const FString& MapName)
 {
 	return MapName.Contains(TEXT("FrontEnd"), ESearchCase::IgnoreCase);
+}
+
+bool HaivenLyraGameplay::IsRewardingElimination(
+	const APlayerState* Local,
+	const APlayerState* Killer,
+	const UObject* Target)
+{
+	return Local && Killer == Local && Target != Local;
 }
 
 const ULyraUserFacingExperienceDefinition* HaivenLyraGameplay::SelectGameplayExperience(

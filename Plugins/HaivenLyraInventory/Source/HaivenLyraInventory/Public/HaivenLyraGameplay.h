@@ -6,6 +6,7 @@
 
 #include "CoreMinimal.h"
 
+class APlayerState;
 class UCommonSession_HostSessionRequest;
 class ULyraUserFacingExperienceDefinition;
 class UObject;
@@ -22,6 +23,17 @@ namespace HaivenLyraGameplay
 	 */
 	HAIVENLYRAINVENTORY_API const ULyraUserFacingExperienceDefinition* SelectGameplayExperience(
 		const TArray<UObject*>& Loaded);
+
+	/**
+	 * True when an elimination earns this player the match reward: the local
+	 * player eliminated someone other than themselves. Killer is the
+	 * instigator's player state and Target the eliminated one, as in Lyra's
+	 * Lyra.Elimination.Message.
+	 */
+	HAIVENLYRAINVENTORY_API bool IsRewardingElimination(
+		const APlayerState* Local,
+		const APlayerState* Killer,
+		const UObject* Target);
 
 	/** Copies the experience into an offline host request owned by Outer. */
 	HAIVENLYRAINVENTORY_API UCommonSession_HostSessionRequest* MakeOfflineHostRequest(
