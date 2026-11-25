@@ -62,7 +62,13 @@ Source updates arrive as pull requests into `main`. Contributions are welcome as
 
 Lyra is covered by the Unreal Engine license that came with your copy of it.
 See the [Lyra sample documentation](https://dev.epicgames.com/documentation/unreal-engine/lyra-sample-game-in-unreal-engine).
-The Haiven plugin's license is [Plugins/Haiven/LICENSE.md](Plugins/Haiven/LICENSE.md).
+Lyra itself is not in this repository.
+
+Haiven's files here are licensed under the Apache License, Version 2.0 (SPDX
+`Apache-2.0`): the plugins under `Plugins/`, the fixtures in
+`Content/HaivenTestFixtures`, and Haiven's changes in `patches/`. The terms are
+in [LICENSE](LICENSE), and each plugin directory carries the same text in its
+`LICENSE.md`. The license does not cover the Lyra files the patches apply to.
 
 Review changes to the Haiven plugins as GitHub pull requests. This repository
 runs no checks of its own, and nothing here cooks Lyra; that needs Lyra's Fab
@@ -164,6 +170,7 @@ This table summarizes the SDK used by this demo. The demo exercises the features
 | REST | ○ |
 | Game login handoff | ○ |
 | P2P sessions | ○ |
+| Credential lifecycle | ✅ |
 | API surface | ✅ |
 | Product | ~ |
 | Developer experience | ~ |
